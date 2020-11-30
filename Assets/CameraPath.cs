@@ -21,7 +21,7 @@ public class CameraPath : MonoBehaviour
         myPath.generatePath();
         objectType = new Dictionary<string, int>();
         // TEMPORARY
-        objectType["background"] = 0;
+        // objectType["background"] = 0;
         objectType["sponge"] = 1;
         objectType["die"] = 2;
         // END TEMP
@@ -55,7 +55,7 @@ public class CameraPath : MonoBehaviour
                 RaycastHit hit;
                 Ray ray;
                 Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
-                Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
+                // Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
                 // ray = myCamera.ScreenPointToRay(screenUV);
                 // if (Physics.Raycast(ray, out hit)) {
                 //     if(objectType.ContainsKey(hit.transform.tag)){
@@ -65,10 +65,68 @@ public class CameraPath : MonoBehaviour
                 //         Debug.Log("[ERROR]: Unknown tag: "+hit.transform.tag);
                 //     }
                 // }
-                List<Vector3> objectRectangles = probeImage(7, 5);
-                foreach (Vector3 rectangle in objectRectangles)
+                Dictionary<int,Dictionary<int,int>> perLineValues= new Dictionary<int, Dictionary<int,int>>();
+                List<int> lengths = new List<int>(); // starting from with negative as 0
+                List<Vector3[]> objectRectangles = probeImage(9, 6); // assuming simple landscape // ok
+                foreach (Vector3[] rectangle in objectRectangles)
                 {
-                    Debug.Log(rectangle);
+                    // Debug.Log(rectangle[0]+" "+rectangle[1]); // ok
+                    for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){
+                        bool hitLastOne = false;
+                        int beginHit = 0;
+                        int lastHitCount = 0;
+                        // int lastNotHitCount = 0;
+                        // Debug.Log(r);
+                        for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
+                            screenUV.x = c;
+                            screenUV.y = r;
+                            ray = myCamera.ScreenPointToRay(screenUV);
+                            if(Physics.Raycast(ray, out hit)){
+                                if(objectType.ContainsKey(hit.transform.tag)){
+                                    if(!hitLastOne){
+                                        beginHit = c;
+                                        lastHitCount = 0;
+                                        // Debug.Log("c: "+c+"  r: "+r); // ok 163 - 270
+                                    }
+                                    hitLastOne = true;
+                                    lastHitCount++;
+                                } else {
+                                    // Debug.Log("inside if row: "+r);
+                                    if(hitLastOne){
+                                        if(!perLineValues.ContainsKey(r)){
+                                            perLineValues[r] = new Dictionary<int,int>();
+                                            // Debug.Log("dict with r as key: "+r);
+                                            // if(perLineValues[r] == null){
+                                            //     perLineValues[r] = new List<Vector2Int>();
+                                            // }
+                                        }
+                                        // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                        perLineValues[r][beginHit] = lastHitCount;
+                                        Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                        // Debug.Log("Should be length 1: "+perLineValues[r].Count);
+                                    }
+                                    hitLastOne = false;
+                                }
+                            } else {
+                                // Debug.Log("outside if row: "+r+"  c: "+c); // reaches the correct row OK
+                                if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
+                                    if(!perLineValues.ContainsKey(r)){
+                                        perLineValues[r] = new Dictionary<int,int>();
+                                        // Debug.Log("dict with r as key: "+r);
+                                        // if(perLineValues[r] == null){
+                                        //     perLineValues[r] = new List<Vector2Int>();
+                                        // }
+                                    }
+                                    // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                    perLineValues[r][beginHit] = lastHitCount;
+                                    Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                    // Debug.Log("Should be length 1: "+perLineValues[r].Count);
+                                }
+                                hitLastOne = false;
+                            }
+                            // Debug.Log(r+" "+c); // ok but upside down
+                        }
+                    }
                 }
                 // for(int r = 0; r < Screen.height; ++r){  // top to bottom
                 //     for(int c = 0; c < Screen.width; ++c){ // left to right
@@ -86,8 +144,8 @@ public class CameraPath : MonoBehaviour
                 //         }
                 //     }
                 // }
-                segmentationImage.Apply();
-                // Debug.Log("pixel in the middle: "+segmentationImage.GetPixel(Screen.width/2, Screen.height/2));
+                // segmentationImage.Apply();
+
                 // byte[] imgBytes = segmentationImage.EncodeToPNG();
                 // File.WriteAllBytes(scrPath, imgBytes);
                 
@@ -97,14 +155,15 @@ public class CameraPath : MonoBehaviour
             }
         }
     }
-    List<Vector3> probeImage(int stepX, int stepY){
+    List<Vector3[]> probeImage(int stepX, int stepY){
         RaycastHit hit;
         Ray ray;
         Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
         Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
         bool lastOneHit = false;
         // TODO create pairs signifying a rectangle List<Vector3[]>
-        List<Vector3> rasterRectangles = new List<Vector3>();        
+        List<Vector3[]> rasterRectangles = new List<Vector3[]>();
+        int lastRectangle = 0;
         for(int r = 0; r < Screen.height; r+=stepY){  // top to bottom
             for(int c = 0; c < Screen.width; c+=stepX){ // left to right
                 // Debug.Log("aiming at x,y: "+c.ToString()+", "+r.ToString()); // ok
@@ -115,20 +174,24 @@ public class CameraPath : MonoBehaviour
                 if (Physics.Raycast(ray, out hit)) { // this one hit but the last one didn't
                     if(objectType.ContainsKey(hit.transform.tag)){
                         if(!lastOneHit){
-                            rasterRectangles.Add(new Vector3(c-stepX, r-stepY, 0f));
+                            rasterRectangles.Add(new Vector3[2]);
+                            rasterRectangles[lastRectangle][0] = new Vector3(Mathf.Max(c-stepX, 0f), Mathf.Max(r-stepY, 0f), 0f);
+                            rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
                             // save previous x and previous y
                             // Debug.Log("Known tag: "+hit.transform.tag);
                         }
                         lastOneHit = true;
                     } else { // this one didn't hit
                         if(lastOneHit){ // but the last one did
-                            rasterRectangles.Add(new Vector3(c, r+stepY, 0f));
+                            rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
+                            ++lastRectangle;
                         }
                         lastOneHit = false;
                     }
                 } else {
                     if(lastOneHit){ // but the last one did
-                        rasterRectangles.Add(new Vector3(c, r+stepY, 0f));
+                        rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
+                        ++lastRectangle;
                     }
                     lastOneHit = false;
                 }
