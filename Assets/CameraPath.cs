@@ -82,7 +82,7 @@ public class CameraPath : MonoBehaviour
                     tw.Write("[");
                     for (int i=0; i<codedMask.Count;++i){
                         tw.Write(codedMask[i].ToString());
-                        if(i < codedMask.Count) tw.Write(", ");
+                        if(i+1 < codedMask.Count) tw.Write(", ");
                     }
                     tw.Write("]\n}");
                 }
@@ -135,11 +135,16 @@ public class CameraPath : MonoBehaviour
                     lengths.Add(0);
                     lengths.Add(lines[r][begin].x);
                     lengths.Add(lines[r][begin].y);
+                    lastBegin = begin;
+                    lastLength = lines[r][begin].x;
+                    currentLength = 0;
                     // Debug.Log("segment line: "+r+"  column: "+begin+"  length: "+lines[r][begin].x); // ok
 
                 }
             }
         }
+        lengths.Add(currentLength);
+        lengths.Add(0);
         return lengths;
     }
     Dictionary<int,Dictionary<int,Vector2Int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles){
