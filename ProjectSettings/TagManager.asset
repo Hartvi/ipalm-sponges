@@ -4,8 +4,8 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - sponge
-  - background
+  - spY
+  - bck
   layers:
   - Default
   - TransparentFX

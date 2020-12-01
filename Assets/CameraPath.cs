@@ -1,8 +1,10 @@
-﻿using System.Collections;
+﻿// using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
+// using System.Text.Json;
+// using System.Text.Json.Serialization;
 public class CameraPath : MonoBehaviour
 {
     private Camera myCamera;
@@ -17,13 +19,13 @@ public class CameraPath : MonoBehaviour
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
-        myPath = new SpherePath(1, 1, 3f, -0.1f, Mathf.PI/2);
+        myPath = new SpherePath(4, 5, 3f, -0.1f, Mathf.PI/2);
         myPath.generatePath();
         objectType = new Dictionary<string, int>();
         // TEMPORARY
         // objectType["background"] = 0;
-        objectType["sponge"] = 1;
-        objectType["die"] = 2;
+        objectType["spY"] = 1;
+        objectType["spB"] = 2;
         // END TEMP
     }
     void Update()
@@ -52,9 +54,9 @@ public class CameraPath : MonoBehaviour
                 scrPath = Application.persistentDataPath + "/" + "pic" + myPath.currentID.ToString() + ".png";
                 ScreenCapture.CaptureScreenshot(scrPath, 1);
                 scrPath = Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString() + ".png";
-                RaycastHit hit;
-                Ray ray;
-                Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
+                // RaycastHit hit;
+                // Ray ray;
+                // Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
                 // Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
                 // ray = myCamera.ScreenPointToRay(screenUV);
                 // if (Physics.Raycast(ray, out hit)) {
@@ -65,69 +67,26 @@ public class CameraPath : MonoBehaviour
                 //         Debug.Log("[ERROR]: Unknown tag: "+hit.transform.tag);
                 //     }
                 // }
-                Dictionary<int,Dictionary<int,int>> perLineValues= new Dictionary<int, Dictionary<int,int>>();
                 List<int> lengths = new List<int>(); // starting from with negative as 0
                 List<Vector3[]> objectRectangles = probeImage(9, 6); // assuming simple landscape // ok
-                foreach (Vector3[] rectangle in objectRectangles)
+                Dictionary<int,Dictionary<int, Vector2Int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles);
+                List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
+                using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString()+".txt"))
                 {
-                    // Debug.Log(rectangle[0]+" "+rectangle[1]); // ok
-                    for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){
-                        bool hitLastOne = false;
-                        int beginHit = 0;
-                        int lastHitCount = 0;
-                        // int lastNotHitCount = 0;
-                        // Debug.Log(r);
-                        for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
-                            screenUV.x = c;
-                            screenUV.y = r;
-                            ray = myCamera.ScreenPointToRay(screenUV);
-                            if(Physics.Raycast(ray, out hit)){
-                                if(objectType.ContainsKey(hit.transform.tag)){
-                                    if(!hitLastOne){
-                                        beginHit = c;
-                                        lastHitCount = 0;
-                                        // Debug.Log("c: "+c+"  r: "+r); // ok 163 - 270
-                                    }
-                                    hitLastOne = true;
-                                    lastHitCount++;
-                                } else {
-                                    // Debug.Log("inside if row: "+r);
-                                    if(hitLastOne){
-                                        if(!perLineValues.ContainsKey(r)){
-                                            perLineValues[r] = new Dictionary<int,int>();
-                                            // Debug.Log("dict with r as key: "+r);
-                                            // if(perLineValues[r] == null){
-                                            //     perLineValues[r] = new List<Vector2Int>();
-                                            // }
-                                        }
-                                        // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
-                                        perLineValues[r][beginHit] = lastHitCount;
-                                        Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
-                                        // Debug.Log("Should be length 1: "+perLineValues[r].Count);
-                                    }
-                                    hitLastOne = false;
-                                }
-                            } else {
-                                // Debug.Log("outside if row: "+r+"  c: "+c); // reaches the correct row OK
-                                if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
-                                    if(!perLineValues.ContainsKey(r)){
-                                        perLineValues[r] = new Dictionary<int,int>();
-                                        // Debug.Log("dict with r as key: "+r);
-                                        // if(perLineValues[r] == null){
-                                        //     perLineValues[r] = new List<Vector2Int>();
-                                        // }
-                                    }
-                                    // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
-                                    perLineValues[r][beginHit] = lastHitCount;
-                                    Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
-                                    // Debug.Log("Should be length 1: "+perLineValues[r].Count);
-                                }
-                                hitLastOne = false;
-                            }
-                            // Debug.Log(r+" "+c); // ok but upside down
-                        }
+                    // string jsonString = JsonUtility.ToJson(codedMask, true);
+                    // string jsonString2 = JsonUtility.ToJson(new int[]{Screen.width, Screen.height});
+                    // tw.Write(jsonString2);
+                    // tw.Write("\n");
+                    // tw.Write(jsonString);
+                    tw.WriteLine("{\n"+"["+Screen.width.ToString()+", "+Screen.height.ToString()+"]");
+                    tw.Write("[");
+                    for (int i=0; i<codedMask.Count;++i){
+                        tw.Write(codedMask[i].ToString());
+                        if(i < codedMask.Count) tw.Write(", ");
                     }
+                    tw.Write("]\n}");
                 }
+                
                 // for(int r = 0; r < Screen.height; ++r){  // top to bottom
                 //     for(int c = 0; c < Screen.width; ++c){ // left to right
                 //         screenUV.x = c;
@@ -155,6 +114,106 @@ public class CameraPath : MonoBehaviour
             }
         }
     }
+    List<int> getRLEFromLines(int width, int height, Dictionary<int,Dictionary<int,Vector2Int>> lines){
+        List<int> lengths = new List<int>(); // starting from zero
+        int currentLength = 0;
+        for(int r = 0; r < height; ++r){
+            if(!lines.ContainsKey(r)){
+                currentLength += width;
+                // Debug.Log("no segment line: "+r);
+            } else {
+                // Debug.Log("segment line: "+r);
+                int[] lineSegments = new int[lines[r].Keys.Count];
+                lines[r].Keys.CopyTo(lineSegments, 0);
+                Array.Sort(lineSegments);
+                int lastBegin = 0;
+                int lastLength = 0;
+                foreach (int begin in lineSegments)
+                {
+                    currentLength += begin - lastBegin - lastLength;
+                    lengths.Add(currentLength);
+                    lengths.Add(0);
+                    lengths.Add(lines[r][begin].x);
+                    lengths.Add(lines[r][begin].y);
+                    // Debug.Log("segment line: "+r+"  column: "+begin+"  length: "+lines[r][begin].x); // ok
+
+                }
+            }
+        }
+        return lengths;
+    }
+    Dictionary<int,Dictionary<int,Vector2Int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles){
+        Dictionary<int,Dictionary<int,Vector2Int>> perLineValues= new Dictionary<int, Dictionary<int,Vector2Int>>();
+        RaycastHit hit;
+        Ray ray;
+        Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
+        foreach (Vector3[] rectangle in objectRectangles)
+        {
+            for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){ // ok
+                bool hitLastOne = false;
+                int beginHit = 0;
+                int lastHitCount = 0;
+                int lastTagID = 0;
+                for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
+                    screenUV.x = c;
+                    screenUV.y = r;
+                    ray = myCamera.ScreenPointToRay(screenUV);
+                    if(Physics.Raycast(ray, out hit)){
+                        // if(hit.transform.CompareTag(tag)){ // for single tag
+                        if(objectType.ContainsKey(hit.transform.tag)){
+                            if(!hitLastOne){
+                                beginHit = c;
+                                lastHitCount = 0; // ok
+                                lastTagID = objectType[hit.transform.tag];
+                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, objectType[hit.transform.tag]);
+                                hitLastOne = true;
+                            }
+                            lastHitCount++;
+                        } else {
+                            if(hitLastOne){
+                                if(!perLineValues.ContainsKey(r)){
+                                    perLineValues[r] = new Dictionary<int,Vector2Int>();
+                                }
+                                
+                                if(!perLineValues[r].ContainsKey(beginHit)){
+                                    perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                    // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                }
+                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                hitLastOne = false;
+                            }
+                        }
+                    } else {
+                        if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
+                            if(!perLineValues.ContainsKey(r)){
+                                perLineValues[r] = new Dictionary<int,Vector2Int>();
+                            }
+                            if(!perLineValues[r].ContainsKey(beginHit)){
+                                perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                            }
+                            // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                            hitLastOne = false;
+                        }
+                    }
+                    if(c+1 == (int)rectangle[1].x){
+                        if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
+                            if(!perLineValues.ContainsKey(r)){
+                                perLineValues[r] = new Dictionary<int,Vector2Int>();
+                            }
+                            if(!perLineValues[r].ContainsKey(beginHit)){
+                                perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                            }
+                            // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                           hitLastOne = false;
+                        }
+                    }
+                }
+            }
+        }
+        return perLineValues;
+    }
     List<Vector3[]> probeImage(int stepX, int stepY){
         RaycastHit hit;
         Ray ray;
@@ -179,21 +238,21 @@ public class CameraPath : MonoBehaviour
                             rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
                             // save previous x and previous y
                             // Debug.Log("Known tag: "+hit.transform.tag);
+                            lastOneHit = true;
                         }
-                        lastOneHit = true;
                     } else { // this one didn't hit
                         if(lastOneHit){ // but the last one did
                             rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
                             ++lastRectangle;
+                            lastOneHit = false;
                         }
-                        lastOneHit = false;
                     }
                 } else {
                     if(lastOneHit){ // but the last one did
                         rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
                         ++lastRectangle;
+                        lastOneHit = false;
                     }
-                    lastOneHit = false;
                 }
             }
         }
