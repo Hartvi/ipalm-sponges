@@ -21,7 +21,14 @@ public class CameraPath : MonoBehaviour
     public float distance = 5;
     public float minZangle = -0.2f;
     public float maxZangle = Mathf.PI/2;
+    public int probeWidth = 9;
+    public int probeHeight = 6;
+    public string focusTagRadical = "sp";
+    public string focusMaterial = "foam";
+    public int focusObjectID = 13; // should be sponge
     RLElist encodedList = new RLElist();
+    List<string> focusTags;
+    
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
@@ -30,15 +37,24 @@ public class CameraPath : MonoBehaviour
         objectType = new Dictionary<string, int>();
         // TEMPORARY
         // objectType["background"] = 0;
-        objectType["spY"] = 0;
-        
+        // objectType["spY"] = 13;
+        // objectType["spG"] = 13;
+        // objectType["spB"] = 13;
+        focusTags = new List<string>();
+        foreach (string t in UnityEditorInternal.InternalEditorUtility.tags)
+        {
+            if(t.Contains(focusTagRadical) && GameObject.FindWithTag(t) != null){
+                focusTags.Add(t); // active objects with wanted tag
+            }
+        }
         // END TEMP
     }
     void Update()
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
             playdatshit = true;
-            encodedList.ims = new RLEncoding[myPath.getLength()];
+            encodedList.ims = new RLEncoding[myPath.getLength()*focusTags.Count];
+            // Debug.Log("total length: "+myPath.getLength()*focusTags.Count);
             // realObjects.SetActive(true);
             // segmentObjects.SetActive(false);
         }
@@ -59,8 +75,8 @@ public class CameraPath : MonoBehaviour
                 // Debug.Log("transform.position: "+transform.position+"  combined: "+(myPath.positions[myPath.currentID-1]+focusObject.position));
                 string scrPath;
                 scrPath = Application.persistentDataPath + "/" + "pic" + myPath.currentID.ToString() + ".png";
-                ScreenCapture.CaptureScreenshot(scrPath, 1);
-                scrPath = Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString() + ".png";
+                ScreenCapture.CaptureScreenshot(scrPath);
+                // scrPath = Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString() + ".png";
                 // RaycastHit hit;
                 // Ray ray;
                 // Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
@@ -74,21 +90,27 @@ public class CameraPath : MonoBehaviour
                 //         Debug.Log("[ERROR]: Unknown tag: "+hit.transform.tag);
                 //     }
                 // }
-                List<int> lengths = new List<int>(); // starting from with negative as 0
-                List<Vector3[]> objectRectangles = probeImage(9, 6); // assuming simple landscape // ok
-                // foreach (Vector3[] item in objectRectangles)
-                // {
-                //     Debug.Log(item[0]+" "+item[1]);
-                // }
-                Dictionary<int,Dictionary<int, Vector2Int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles);
-                List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
-                encodedList.ims[myPath.currentID] = new RLEncoding();
-                encodedList.ims[myPath.currentID].imageID = "seg" + myPath.currentID.ToString()+".png";
-                encodedList.ims[myPath.currentID].imageHeight = Screen.height;
-                encodedList.ims[myPath.currentID].imageWidth = Screen.width;
-                encodedList.ims[myPath.currentID].materialID = objectType["spY"];
-                encodedList.ims[myPath.currentID].objectID = objectType["spY"];
-                encodedList.ims[myPath.currentID].RLE = codedMask;
+                int i = 0;
+                foreach (string t in focusTags){
+                    List<int> lengths = new List<int>(); // starting from with negative as 0
+                    List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
+                    // foreach (Vector3[] item in objectRectangles)
+                    // {
+                    //     Debug.Log(item[0]+" "+item[1]);
+                    // }
+                    Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
+                    List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
+                    RLEncoding newEncoding = new RLEncoding();
+                    newEncoding.imageID = "seg" + myPath.currentID.ToString()+".png";
+                    newEncoding.imageHeight = Screen.height;
+                    newEncoding.imageWidth = Screen.width;
+                    newEncoding.materialID = focusMaterial;
+                    newEncoding.objectID = focusObjectID;
+                    newEncoding.RLE = codedMask;
+                    int currentI = (myPath.currentID*focusTags.Count+i);
+                    // Debug.Log("current i: "+currentI);
+                    encodedList.ims[myPath.currentID*focusTags.Count+(i++)] = newEncoding;
+                }
                 // Debug.Log(encodedList.ims[myPath.currentID].imageID);
                 // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString()+".txt"))
                 // {
@@ -142,7 +164,7 @@ public class CameraPath : MonoBehaviour
             }
         }
     }
-    List<int> getRLEFromLines(int width, int height, Dictionary<int,Dictionary<int,Vector2Int>> lines){
+    List<int> getRLEFromLines(int width, int height, Dictionary<int,Dictionary<int,int>> lines){
         int totalLength = 0;
         List<int> lengths = new List<int>(); // starting from zero
         int currentLength = 0;
@@ -155,6 +177,16 @@ public class CameraPath : MonoBehaviour
                 int[] lineSegments = new int[lines[r].Keys.Count];
                 lines[r].Keys.CopyTo(lineSegments, 0);
                 Array.Sort(lineSegments);
+                // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_debug" + ".txt"))
+                // {
+                //     // tw.Write("Sorted:\n");
+                //     string toWrite = "";
+                //     for(int j = 0; j < lineSegments.Length; ++j){
+                //         toWrite = toWrite+lineSegments[j].ToString();
+                //     }
+                //     tw.Write(toWrite+"\n");
+                //     // Debug.Log("saved json");
+                // }
                 int lastBegin = 0;
                 int lastLength = 0;
                 for (int i = 0; i < lineSegments.Length;++i)// begin in lineSegments)
@@ -162,19 +194,42 @@ public class CameraPath : MonoBehaviour
                     // Debug.Log("b4 current length: "+currentLength);
                     currentLength += lineSegments[i] - lastBegin - lastLength;
                     // Debug.Log("after current length: "+currentLength);
-                    lengths.Add(currentLength);
-                    totalLength += currentLength;
-                    lengths.Add(lines[r][lineSegments[i]].x); // take into account that I haven't reached the end of the line
-                    totalLength += lines[r][lineSegments[i]].x;
+                    if(currentLength > 0){
+                        lengths.Add(currentLength);
+                    } else {
+                        // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_debug" + ".txt"))
+                        // {
+                        //     // tw.Write("Sorted:\n");
+                        //     string toWrite = "";
+                        //     for(int j = 0; j < lineSegments.Length; ++j){
+                        //         toWrite = toWrite+"Line: "+r+"  Start: "+lineSegments[j].ToString()+": "+" length: "+lines[r][lineSegments[i]].x.ToString()+"\n";
+                                
+                                
+                        //     }
+                        //     toWrite += "\n";
+                        //     tw.Write(toWrite+"\n");
+                        //     // Debug.Log("saved json");
+                        // }
+                        // Debug.Log("Wanted to add current length: "+currentLength);
+                        // Debug.Log("lineSegments[i] - lastBegin - lastLength: "+(lineSegments[i] - lastBegin - lastLength));
+                        // Debug.Log("lineSegments[i]: "+lineSegments[i]+"  lastBegin: "+lastBegin+"  lastLength: "+lastLength);
+                    }
+                    totalLength += currentLength; // parallel counting
+                    if(lines[r][lineSegments[i]] > 0) {
+                        lengths.Add(lines[r][lineSegments[i]]); // take into account that I haven't reached the end of the line
+                    } else {
+                        // Debug.Log("Wanted to add segment: "+lines[r][lineSegments[i]].x);
+                    }
+                    totalLength += lines[r][lineSegments[i]]; // parallel counting
                     // Debug.Log("left space: "+(lineSegments[i] - lastBegin - lastLength)+"  object: "+lines[r][lineSegments[i]].x+"  right space: "+(width - (lineSegments[i] + lines[r][lineSegments[i]].x)) );
-                    Debug.Log("sum of the above: "+((lineSegments[i] - lastBegin - lastLength)+lines[r][lineSegments[i]].x+(width - (lineSegments[i] + lines[r][lineSegments[i]].x))));
+                    // Debug.Log("sum of the above: "+((lineSegments[i] - lastBegin - lastLength)+lines[r][lineSegments[i]].x+(width - (lineSegments[i] + lines[r][lineSegments[i]].x))));
                     
                     // old stuff
                     lastBegin = lineSegments[i];
-                    lastLength = lines[r][lineSegments[i]].x;
-                    Debug.Log("index: "+i+"/"+lineSegments.Length);
+                    lastLength = lines[r][lineSegments[i]];
+                    // Debug.Log("index: "+i+"/"+lineSegments.Length);
                     if(i+1 == lineSegments.Length){
-                        currentLength = (width - (lineSegments[i] + lines[r][lineSegments[i]].x));
+                        currentLength = (width - (lineSegments[i] + lines[r][lineSegments[i]]));
                     } else {
                         currentLength = 0;
                     }
@@ -188,7 +243,7 @@ public class CameraPath : MonoBehaviour
         // {
         //     totalLength += item;
         // }
-        totalLength += currentLength;
+        totalLength += currentLength; // parallel counting
         // Debug.Log("width*height: "+Screen.width*Screen.height);
         // Debug.Log("total length: "+totalLength);
         // if(width - totalLength < 0){
@@ -198,8 +253,8 @@ public class CameraPath : MonoBehaviour
         // }
         return lengths;
     }
-    Dictionary<int,Dictionary<int,Vector2Int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles){
-        Dictionary<int,Dictionary<int,Vector2Int>> perLineValues= new Dictionary<int, Dictionary<int,Vector2Int>>();
+    Dictionary<int,Dictionary<int,int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles, string targetTag){
+        Dictionary<int,Dictionary<int,int>> perLineValues= new Dictionary<int, Dictionary<int,int>>();
         RaycastHit hit;
         Ray ray;
         Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
@@ -212,18 +267,18 @@ public class CameraPath : MonoBehaviour
                 bool hitLastOne = false;
                 int beginHit = 0;
                 int lastHitCount = 0;
-                int lastTagID = 0;
+                // string lastTagID = 0;
                 for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
                     screenUV.x = c;
                     screenUV.y = r;
                     ray = myCamera.ScreenPointToRay(screenUV);
                     if(Physics.Raycast(ray, out hit)){
                         // if(hit.transform.CompareTag(tag)){ // for single tag
-                        if(objectType.ContainsKey(hit.transform.tag)){
+                        if(hit.transform.tag == targetTag){
                             if(!hitLastOne){
                                 beginHit = c;
                                 lastHitCount = 0; // ok
-                                lastTagID = objectType[hit.transform.tag];
+                                // lastTagID = targetTag;
                                 // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, objectType[hit.transform.tag]);
                                 hitLastOne = true;
                             }
@@ -231,11 +286,12 @@ public class CameraPath : MonoBehaviour
                         } else {
                             if(hitLastOne){
                                 if(!perLineValues.ContainsKey(r)){
-                                    perLineValues[r] = new Dictionary<int,Vector2Int>();
+                                    perLineValues[r] = new Dictionary<int,int>();
                                 }
                                 
                                 if(!perLineValues[r].ContainsKey(beginHit)){
-                                    perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                    perLineValues[r][beginHit] = lastHitCount;
+                                    // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
                                     // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                                 }
                                 // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
@@ -245,10 +301,11 @@ public class CameraPath : MonoBehaviour
                     } else {
                         if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
                             if(!perLineValues.ContainsKey(r)){
-                                perLineValues[r] = new Dictionary<int,Vector2Int>();
+                                perLineValues[r] = new Dictionary<int,int>();
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
-                                perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                    perLineValues[r][beginHit] = lastHitCount;
+                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
                                 // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                             }
                             // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
@@ -258,10 +315,11 @@ public class CameraPath : MonoBehaviour
                     if(c+1 == (int)rectangle[1].x){
                         if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
                             if(!perLineValues.ContainsKey(r)){
-                                perLineValues[r] = new Dictionary<int,Vector2Int>();
+                                perLineValues[r] = new Dictionary<int,int>();
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
-                                perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
+                                    perLineValues[r][beginHit] = lastHitCount;
+                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
                                 // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                             }
                             // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
@@ -273,7 +331,7 @@ public class CameraPath : MonoBehaviour
         }
         return perLineValues;
     }
-    List<Vector3[]> probeImage(int stepX, int stepY){
+    List<Vector3[]> probeImage(int stepX, int stepY, string targetTag){
         RaycastHit hit;
         Ray ray;
         Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
@@ -290,10 +348,10 @@ public class CameraPath : MonoBehaviour
                 ray = myCamera.ScreenPointToRay(screenUV); // very slow
                 
                 if (Physics.Raycast(ray, out hit)) { // this one hit but the last one didn't
-                    if(objectType.ContainsKey(hit.transform.tag)){
+                    if(hit.transform.tag == targetTag){
                         if(!lastOneHit){
                             rasterRectangles.Add(new Vector3[2]);
-                            rasterRectangles[lastRectangle][0] = new Vector3(Mathf.Max(c-stepX, 0f), Mathf.Max(r-stepY, 0f), 0f);
+                            rasterRectangles[lastRectangle][0] = new Vector3(Mathf.Max(c-stepX, 0f), r, 0f);
                             rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
                             // save previous x and previous y
                             // Debug.Log("Known tag: "+hit.transform.tag);
@@ -378,7 +436,7 @@ public class SpherePath{
 class RLEncoding{ // , ISerializationCallbackReceiver
     public string imageID;
     public int objectID; // 0=sponge,1=cube
-    public int materialID; // 0=foam
+    public string materialID; // 0=foam
     public int imageWidth;
     public int imageHeight;
     public List<int> RLE;

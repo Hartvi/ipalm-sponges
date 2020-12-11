@@ -6,6 +6,16 @@ TagManager:
   tags:
   - spY
   - bck
+  - spG
+  - spB
+  - Floor
+  - Ceiling
+  - spR
+  - dP
+  - dLB
+  - dB
+  - spT
+  - spO
   layers:
   - Default
   - TransparentFX
