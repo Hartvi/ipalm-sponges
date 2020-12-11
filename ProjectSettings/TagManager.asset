@@ -16,6 +16,10 @@ TagManager:
   - dB
   - spT
   - spO
+  - spW
+  - spK
+  - spP
+  - cbB
   layers:
   - Default
   - TransparentFX

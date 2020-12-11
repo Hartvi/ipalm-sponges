@@ -35,11 +35,7 @@ public class CameraPath : MonoBehaviour
         myPath = new SpherePath(horizontalSteps, verticalSteps, distance, minZangle, maxZangle);
         myPath.generatePath();
         objectType = new Dictionary<string, int>();
-        // TEMPORARY
-        // objectType["background"] = 0;
-        // objectType["spY"] = 13;
-        // objectType["spG"] = 13;
-        // objectType["spB"] = 13;
+
         focusTags = new List<string>();
         foreach (string t in UnityEditorInternal.InternalEditorUtility.tags)
         {
@@ -47,119 +43,51 @@ public class CameraPath : MonoBehaviour
                 focusTags.Add(t); // active objects with wanted tag
             }
         }
-        // END TEMP
     }
     void Update()
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
             playdatshit = true;
             encodedList.ims = new RLEncoding[myPath.getLength()*focusTags.Count];
-            // Debug.Log("total length: "+myPath.getLength()*focusTags.Count);
-            // realObjects.SetActive(true);
-            // segmentObjects.SetActive(false);
         }
-        // if(Input.GetMouseButtonDown(0)){
-        //     RaycastHit hit;
-        //     Ray ray;
-        //     ray = myCamera.ScreenPointToRay(Input.mousePosition);
-        //     if (Physics.Raycast(ray, out hit)) {
-        //         Debug.Log("Tag: "+hit.transform.tag+"  position: "+Input.mousePosition);
-        //     }
-        // }
-        // Debug.Log("Iterating path");
         if(playdatshit){
             if(myPath.next()){
                 transform.position = focusObject.position + myPath.nextPosition();
-                // Debug.Log("focusObject.position: "+focusObject.position+"  myPath.currentPosition: "+myPath.positions[myPath.currentID-1]);
                 transform.LookAt(focusObject.position);
-                // Debug.Log("transform.position: "+transform.position+"  combined: "+(myPath.positions[myPath.currentID-1]+focusObject.position));
                 string scrPath;
                 scrPath = Application.persistentDataPath + "/" + "pic" + myPath.currentID.ToString() + ".png";
                 ScreenCapture.CaptureScreenshot(scrPath);
-                // scrPath = Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString() + ".png";
-                // RaycastHit hit;
-                // Ray ray;
-                // Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
-                // Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
-                // ray = myCamera.ScreenPointToRay(screenUV);
-                // if (Physics.Raycast(ray, out hit)) {
-                //     if(objectType.ContainsKey(hit.transform.tag)){
-                //         Debug.Log("Known tag: "+hit.transform.tag);
-                //         segmentationImage.SetPixel(0, Screen.height-1, new Color(0f, 0f, 0f, objectType[hit.transform.tag]/255f));
-                //     } else {
-                //         Debug.Log("[ERROR]: Unknown tag: "+hit.transform.tag);
-                //     }
-                // }
                 int i = 0;
                 foreach (string t in focusTags){
-                    List<int> lengths = new List<int>(); // starting from with negative as 0
+                    // get rectangles:
                     List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
-                    // foreach (Vector3[] item in objectRectangles)
-                    // {
-                    //     Debug.Log(item[0]+" "+item[1]);
-                    // }
+                    // get RLE for each line, {row: {start: length}} :
                     Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
+                    // get bounding box from line RLE:
+                    int[] boundingBox = RLELines2BoundingBox(lineAnnotation);
+                    Debug.Log("topLeft: "+boundingBox[0]+"  bottomRight: "+boundingBox[1]);//
+                    // get RLE for whole image composed from RLE of each line:
                     List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
-                    RLEncoding newEncoding = new RLEncoding();
-                    newEncoding.imageID = "seg" + myPath.currentID.ToString()+".png";
-                    newEncoding.imageHeight = Screen.height;
-                    newEncoding.imageWidth = Screen.width;
-                    newEncoding.materialID = focusMaterial;
-                    newEncoding.objectID = focusObjectID;
-                    newEncoding.RLE = codedMask;
-                    int currentI = (myPath.currentID*focusTags.Count+i);
-                    // Debug.Log("current i: "+currentI);
-                    encodedList.ims[myPath.currentID*focusTags.Count+(i++)] = newEncoding;
+                    // save the RLE of image into serializable class:
+                    RLEncoding newEncoding = new RLEncoding(); // new single encoding for one instance of (object,material,image)
+                    newEncoding.imageID = "seg" + myPath.currentID.ToString()+".png"; // image name
+                    newEncoding.imageHeight = Screen.height; // image height
+                    newEncoding.imageWidth = Screen.width; // image width
+                    newEncoding.materialID = focusMaterial; // material of focus, e.g. foam
+                    newEncoding.objectID = focusObjectID; // object type, e.g. sponge
+                    newEncoding.RLE = codedMask; // the actual RLE encoding for a single (object,material)
+                    newEncoding.boundingBox = boundingBox;
+                    encodedList.ims[myPath.currentID*focusTags.Count+(i++)] = newEncoding; // save encoding for given (object,material,image)
                 }
-                // Debug.Log(encodedList.ims[myPath.currentID].imageID);
-                // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "seg" + myPath.currentID.ToString()+".txt"))
-                // {
-                //     // string jsonString = JsonUtility.ToJson(codedMask, true);
-                //     // string jsonString2 = JsonUtility.ToJson(new int[]{Screen.width, Screen.height});
-                //     // tw.Write(jsonString2);
-                //     // tw.Write("\n");
-                //     // tw.Write(jsonString);
-                //     string jsonString = JsonUtility.ToJson();
-                //     tw.WriteLine("{\n"+"["+Screen.width.ToString()+", "+Screen.height.ToString()+"]");
-                //     tw.Write("[");
-                //     for (int i=0; i<codedMask.Count;++i){
-                //         tw.Write(codedMask[i].ToString());
-                //         if(i+1 < codedMask.Count) tw.Write(", ");
-                //     }
-                //     tw.Write("]\n}");
-                // }
-                
-                // for(int r = 0; r < Screen.height; ++r){  // top to bottom
-                //     for(int c = 0; c < Screen.width; ++c){ // left to right
-                //         screenUV.x = c;
-                //         screenUV.y = r;
-                //         ray = myCamera.ScreenPointToRay(screenUV); // very slow
-                        
-                //         if (Physics.Raycast(ray, out hit)) {
-                //             if(objectType.ContainsKey(hit.transform.tag)){
-                //                 Debug.Log("Known tag: "+hit.transform.tag);
-                //                 segmentationImage.SetPixel(c, r, new Color(0f, 0f, 0f, objectType[hit.transform.tag]/255f));
-                //             } else {
-                //                 Debug.Log("[ERROR]: Unknown tag: "+hit.transform.tag);
-                //             }
-                //         }
-                //     }
-                // }
-                // segmentationImage.Apply();
-
-                // byte[] imgBytes = segmentationImage.EncodeToPNG();
-                // File.WriteAllBytes(scrPath, imgBytes);
                 
             } else {
                 Debug.Log("Finished taking photos.");
                 playdatshit = false;
                 string jsonString = JsonUtility.ToJson(encodedList, true);
-                // Debug.Log(jsonString);
-                Debug.Log("want to save json");
                 using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_data" + ".json"))
                 {
                     tw.Write(jsonString);
-                    Debug.Log("saved json");
+                    Debug.Log("Saved json");
                 }
             }
         }
@@ -171,115 +99,94 @@ public class CameraPath : MonoBehaviour
         for(int r = height-1; r > -1; --r){
             if(!lines.ContainsKey(r)){
                 currentLength += width;
-                // Debug.Log("no segment line: "+r);
             } else {
-                // Debug.Log("segment line: "+r);
                 int[] lineSegments = new int[lines[r].Keys.Count];
                 lines[r].Keys.CopyTo(lineSegments, 0);
                 Array.Sort(lineSegments);
-                // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_debug" + ".txt"))
-                // {
-                //     // tw.Write("Sorted:\n");
-                //     string toWrite = "";
-                //     for(int j = 0; j < lineSegments.Length; ++j){
-                //         toWrite = toWrite+lineSegments[j].ToString();
-                //     }
-                //     tw.Write(toWrite+"\n");
-                //     // Debug.Log("saved json");
-                // }
                 int lastBegin = 0;
                 int lastLength = 0;
                 for (int i = 0; i < lineSegments.Length;++i)// begin in lineSegments)
                 {
-                    // Debug.Log("b4 current length: "+currentLength);
                     currentLength += lineSegments[i] - lastBegin - lastLength;
-                    // Debug.Log("after current length: "+currentLength);
                     if(currentLength > 0){
                         lengths.Add(currentLength);
                     } else {
-                        // using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_debug" + ".txt"))
-                        // {
-                        //     // tw.Write("Sorted:\n");
-                        //     string toWrite = "";
-                        //     for(int j = 0; j < lineSegments.Length; ++j){
-                        //         toWrite = toWrite+"Line: "+r+"  Start: "+lineSegments[j].ToString()+": "+" length: "+lines[r][lineSegments[i]].x.ToString()+"\n";
-                                
-                                
-                        //     }
-                        //     toWrite += "\n";
-                        //     tw.Write(toWrite+"\n");
-                        //     // Debug.Log("saved json");
-                        // }
-                        // Debug.Log("Wanted to add current length: "+currentLength);
-                        // Debug.Log("lineSegments[i] - lastBegin - lastLength: "+(lineSegments[i] - lastBegin - lastLength));
-                        // Debug.Log("lineSegments[i]: "+lineSegments[i]+"  lastBegin: "+lastBegin+"  lastLength: "+lastLength);
                     }
                     totalLength += currentLength; // parallel counting
                     if(lines[r][lineSegments[i]] > 0) {
                         lengths.Add(lines[r][lineSegments[i]]); // take into account that I haven't reached the end of the line
                     } else {
-                        // Debug.Log("Wanted to add segment: "+lines[r][lineSegments[i]].x);
                     }
                     totalLength += lines[r][lineSegments[i]]; // parallel counting
-                    // Debug.Log("left space: "+(lineSegments[i] - lastBegin - lastLength)+"  object: "+lines[r][lineSegments[i]].x+"  right space: "+(width - (lineSegments[i] + lines[r][lineSegments[i]].x)) );
-                    // Debug.Log("sum of the above: "+((lineSegments[i] - lastBegin - lastLength)+lines[r][lineSegments[i]].x+(width - (lineSegments[i] + lines[r][lineSegments[i]].x))));
-                    
-                    // old stuff
+                    // previous round \/
                     lastBegin = lineSegments[i];
                     lastLength = lines[r][lineSegments[i]];
-                    // Debug.Log("index: "+i+"/"+lineSegments.Length);
                     if(i+1 == lineSegments.Length){
                         currentLength = (width - (lineSegments[i] + lines[r][lineSegments[i]]));
                     } else {
                         currentLength = 0;
                     }
-                    // Debug.Log("segment line: "+r+"  column: "+begin+"  length: "+lines[r][begin].x); // ok
 
                 }
             }
         }
         lengths.Add(currentLength);
-        // foreach (int item in lengths)
-        // {
-        //     totalLength += item;
-        // }
         totalLength += currentLength; // parallel counting
-        // Debug.Log("width*height: "+Screen.width*Screen.height);
-        // Debug.Log("total length: "+totalLength);
-        // if(width - totalLength < 0){
-        //     Debug.Log("total length > width: diff: "+(width - totalLength));
-        // } else {
-        //     Debug.Log("total length < width: diff: "+(width - totalLength));
-        // }
+        if(totalLength != Screen.height*Screen.width){
+            Debug.Log("[ERROR] RLE sum not checking up. RLE sum: "+totalLength+"  vs: "+(Screen.height*Screen.width));
+        }
         return lengths;
+    }
+    int[] RLELines2BoundingBox(Dictionary<int,Dictionary<int, int>> lineAnnotation){
+        int[] boundingBox = new int[4];
+        int[] lineNumbers = new int[lineAnnotation.Keys.Count];
+        lineAnnotation.Keys.CopyTo(lineNumbers, 0);
+        Array.Sort(lineNumbers);
+        int topRowIndex = lineNumbers[lineNumbers.Length-1]; // unity goes from bottom to top; take top row
+        int bottomRowIndex = lineNumbers[0]; // unity goes from bottom to top; take bottom row
+        int numberOfTopKeys = lineAnnotation[topRowIndex].Keys.Count; // how many beginnings there are on this row
+        int[] topLineStarts = new int[numberOfTopKeys]; // array for holding all starts of positive regions
+        int maxLeft = Int32.MaxValue;
+        int maxRight = 0;
+        foreach (KeyValuePair<int,Dictionary<int,int>> row in lineAnnotation)
+        {
+            foreach (KeyValuePair<int,int> startnLength in row.Value)
+            {
+                if(startnLength.Key < maxLeft){
+                    maxLeft = startnLength.Key; // start can be between 0 and Screen.width-2
+                }
+                if(startnLength.Value + startnLength.Key > maxRight){
+                    maxRight = startnLength.Value + startnLength.Key; // (start + length) makes it go right
+                }
+            }
+        }
+        
+        boundingBox[0] = maxLeft;
+        boundingBox[1] = Screen.height - topRowIndex;
+        boundingBox[2] = maxLeft;
+        boundingBox[3] = Screen.height - bottomRowIndex;
+        return boundingBox;
     }
     Dictionary<int,Dictionary<int,int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles, string targetTag){
         Dictionary<int,Dictionary<int,int>> perLineValues= new Dictionary<int, Dictionary<int,int>>();
         RaycastHit hit;
         Ray ray;
         Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
-        // int topIndex = Screen.width-1;
-        // Debug.Log("Scr.h: "+topIndex);
         foreach (Vector3[] rectangle in objectRectangles)
         {
-            // Debug.Log(rectangle[0]+"  "+rectangle[1]);
             for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){ // ok
                 bool hitLastOne = false;
                 int beginHit = 0;
                 int lastHitCount = 0;
-                // string lastTagID = 0;
                 for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
                     screenUV.x = c;
                     screenUV.y = r;
                     ray = myCamera.ScreenPointToRay(screenUV);
                     if(Physics.Raycast(ray, out hit)){
-                        // if(hit.transform.CompareTag(tag)){ // for single tag
                         if(hit.transform.tag == targetTag){
                             if(!hitLastOne){
                                 beginHit = c;
                                 lastHitCount = 0; // ok
-                                // lastTagID = targetTag;
-                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, objectType[hit.transform.tag]);
                                 hitLastOne = true;
                             }
                             lastHitCount++;
@@ -291,10 +198,7 @@ public class CameraPath : MonoBehaviour
                                 
                                 if(!perLineValues[r].ContainsKey(beginHit)){
                                     perLineValues[r][beginHit] = lastHitCount;
-                                    // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
-                                    // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                                 }
-                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                                 hitLastOne = false;
                             }
                         }
@@ -305,10 +209,7 @@ public class CameraPath : MonoBehaviour
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
                                     perLineValues[r][beginHit] = lastHitCount;
-                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
-                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                             }
-                            // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                             hitLastOne = false;
                         }
                     }
@@ -318,11 +219,8 @@ public class CameraPath : MonoBehaviour
                                 perLineValues[r] = new Dictionary<int,int>();
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
-                                    perLineValues[r][beginHit] = lastHitCount;
-                                // perLineValues[r][beginHit] = new Vector2Int(lastHitCount, lastTagID);
-                                // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
+                                perLineValues[r][beginHit] = lastHitCount;
                             }
-                            // Debug.Log("row: "+r+"  col: "+beginHit+"  len: "+lastHitCount);
                            hitLastOne = false;
                         }
                     }
@@ -337,12 +235,10 @@ public class CameraPath : MonoBehaviour
         Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
         Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
         bool lastOneHit = false;
-        // TODO create pairs signifying a rectangle List<Vector3[]>
         List<Vector3[]> rasterRectangles = new List<Vector3[]>();
         int lastRectangle = 0;
         for(int r = 0; r < Screen.height; r+=stepY){  // top to bottom
             for(int c = 0; c < Screen.width; c+=stepX){ // left to right
-                // Debug.Log("aiming at x,y: "+c.ToString()+", "+r.ToString()); // ok
                 screenUV.x = c;
                 screenUV.y = r;
                 ray = myCamera.ScreenPointToRay(screenUV); // very slow
@@ -354,7 +250,6 @@ public class CameraPath : MonoBehaviour
                             rasterRectangles[lastRectangle][0] = new Vector3(Mathf.Max(c-stepX, 0f), r, 0f);
                             rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
                             // save previous x and previous y
-                            // Debug.Log("Known tag: "+hit.transform.tag);
                             lastOneHit = true;
                         }
                     } else { // this one didn't hit
@@ -439,16 +334,8 @@ class RLEncoding{ // , ISerializationCallbackReceiver
     public string materialID; // 0=foam
     public int imageWidth;
     public int imageHeight;
+    public int[] boundingBox;
     public List<int> RLE;
-    // [Serializable]
-    // public struct SerializableRLE {
-    //     public string interestingValue;
-    //     public int childCount;
-    //     public int indexOfFirstChild;
-    // }
-    // public void OnBeforeSerialize() {
-        
-    // }
 }
 
 [System.Serializable]
@@ -461,11 +348,5 @@ enum ObjectType{
     sponge,
     cube,
     die
-}
-[Serializable]
-enum Material{
-    foam,
-    softPlastic,
-    hardPlastic
 }
 
