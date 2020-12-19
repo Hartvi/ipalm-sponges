@@ -85,7 +85,7 @@ public class CameraPath : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
             playdatshit = true;
-            encodedList.ims = new RLEncoding[myPath.getLength()*focusTags.Count];
+            encodedList.ims = new RLEncoding[myPath.getLength()];
         }
         
         
@@ -123,7 +123,9 @@ public class CameraPath : MonoBehaviour
                 string scrPath;
                 scrPath = Application.persistentDataPath + "/" + "pic" + myPath.currentID.ToString() + ".png";
                 ScreenCapture.CaptureScreenshot(scrPath);
-                int i = 0;
+                // int i = 0;
+                RLEncoding newEncoding = new RLEncoding(); // new single encoding for one instance of (object,material,image)
+                newEncoding.annotation = new List<Annotation>();
                 foreach (string t in focusTags){
                     // get rectangles:
                     List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
@@ -136,21 +138,27 @@ public class CameraPath : MonoBehaviour
                     // get RLE for whole image composed from RLE of each line:
                     List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
                     // save the RLE of image into serializable class:
-                    RLEncoding newEncoding = new RLEncoding(); // new single encoding for one instance of (object,material,image)
                     newEncoding.imageID = "pic" + myPath.currentID.ToString()+".png"; // image name
                     newEncoding.imageHeight = Screen.height; // image height
                     newEncoding.imageWidth = Screen.width; // image width
                     newEncoding.materialID = focusMaterial; // material of focus, e.g. foam
                     newEncoding.objectID = focusObjectID; // object type, e.g. sponge
-                    newEncoding.RLE = codedMask; // the actual RLE encoding for a single (object,material)
-                    newEncoding.boundingBox = boundingBox;
-                    encodedList.ims[myPath.currentID*focusTags.Count+(i++)] = newEncoding; // save encoding for given (object,material,image)
+                    // newEncoding.RLE = codedMask; // the actual RLE encoding for a single (object,material)
+                    // newEncoding.boundingBox = boundingBox;
+                    Annotation annotation = new Annotation();
+                    RLERaw rawRLE = new RLERaw();
+                    annotation.bbox = boundingBox;
+                    rawRLE.counts = codedMask;
+                    rawRLE.size = new int[]{Screen.height, Screen.width};
+                    annotation.segmentation = rawRLE;
+                    newEncoding.annotation.Add(annotation);
                 }
-                byte[] bytees = new byte[]{0x11, 0x22, 0x33};
-                foreach (var item in bytees)
-                {
-                    Debug.Log("byte: "+item);
-                }
+                encodedList.ims[myPath.currentID] = newEncoding; // save encoding for given (object,material,image)
+                // byte[] bytees = new byte[]{0x11, 0x22, 0x33};
+                // foreach (var item in bytees)
+                // {
+                //     Debug.Log("byte: "+item);
+                // }
                 
             } else {
                 Debug.Log("Finished taking photos.");
@@ -462,20 +470,21 @@ class RLEncoding{ // , ISerializationCallbackReceiver
     public string materialID; // 0=foam
     public int imageWidth;
     public int imageHeight;
-    public int[] boundingBox;
-    public List<int> RLE;
+    // public int[] boundingBox;
+    // public List<int> RLE;
     public List<Annotation> annotation;
 }
 
 [System.Serializable]
 class RLERaw{
-    public int[] bbox;
+    
     public List<int> counts;
     public int[] size;
 }
 [System.Serializable]
 class Annotation{
-    public List<RLERaw> segmentation;
+    public int[] bbox;
+    public RLERaw segmentation;
 }
 
 [System.Serializable]
