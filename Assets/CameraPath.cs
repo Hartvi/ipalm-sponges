@@ -31,10 +31,13 @@ public class CameraPath : MonoBehaviour
     public bool randomObjectActivation = false;
     // public int numberOfObjects = 9;
     public bool saveBinaryMask = false;
+    private List<string> resizeImages = new List<string>();
+    int IDtaken = 0;
+    bool grab = false;
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
-        myPath = new SpherePath(horizontalSteps, verticalSteps, distance, minZangle, maxZangle);
+        myPath = new SpherePath(verticalSteps, horizontalSteps, distance, minZangle, maxZangle);
         myPath.generatePath();
         objectType = new Dictionary<string, int>();
 
@@ -81,7 +84,8 @@ public class CameraPath : MonoBehaviour
             playdatshit = true;
             encodedList.ims = new RLEncoding[myPath.getLength()];
             string folderPath;
-            folderPath = Application.persistentDataPath + "/"+"images";
+            folderPath = Path.Combine(Application.persistentDataPath,"Resources/","images");
+            Debug.Log(folderPath);
             System.IO.Directory.CreateDirectory(folderPath);
         }
         if(Input.GetMouseButtonDown(1)){
@@ -146,11 +150,30 @@ public class CameraPath : MonoBehaviour
                     transform.position = focusObject.position + myPath.nextPosition();
                     transform.LookAt(focusObject.position);
                 }
-                string scrPath, folderName = "images"+"/", imageName = myPath.currentID.ToString() + ".png";
+                string scrPath, folderName = Path.Combine("Resources/","images/"), imageName = myPath.currentID.ToString() + ".png";
                 int maskID = myPath.currentID;
                 // string maskFileName = "/SavedScreen"+myPath.currentID.ToString()+"-"+i.ToString()+".png";
-                scrPath = Application.persistentDataPath + "/" + folderName + imageName;
+                scrPath = Path.Combine(Application.persistentDataPath,"Resources/","images", imageName);
+                resizeImages.Add(scrPath);
+                // Texture2D captchaa = new Texture2D(Screen.width, Screen.height);
+                // captchaa.ReadPixels(new Rect(0,0,Screen.width,Screen.height),0,0);
+                // captchaa.Apply();
+                // File.WriteAllBytes(scrPath, captchaa.EncodeToPNG());
+
                 ScreenCapture.CaptureScreenshot(scrPath);
+                // Debug.Log(scrPath);
+                // byte[] imbytes = File.ReadAllBytes(scrPath);
+                // Texture2D captchaa = new Texture2D(Screen.width, Screen.height);
+                // captchaa.LoadImage(imbytes);
+                // captchaa.Apply();
+                // captchaa = Utility.Resize(captchaa, Screen.width, Screen.height);
+                
+                // captchaa.Resize(Screen.width, Screen.height, TextureFormat.RGBA32, false);
+                // captchaa.Apply();
+                // Debug.Log("w, h: " + captchaa.width+", "+captchaa.height);
+                // File.WriteAllBytes(scrPath, captchaa.EncodeToPNG());
+
+
                 // save encoding for given (object,material,image)
                 encodedList.ims[myPath.currentID] = createRLEncoding4Image(folderName, imageName, maskID); 
                 if(saveBinaryMask){
@@ -158,7 +181,7 @@ public class CameraPath : MonoBehaviour
                     {
                         Texture2D tex = RLE2alpha8(encodedList.ims[myPath.currentID].annotations[i].segmentation, true);
                         byte[] bytes = tex.EncodeToPNG();
-                        File.WriteAllBytes(Path.Combine(Application.persistentDataPath, "images/"+maskID.ToString()+"-"+i.ToString()+".png"), bytes);
+                        File.WriteAllBytes(Path.Combine(Application.persistentDataPath,"Resources", "images/"+maskID.ToString()+"-"+i.ToString()+".png"), bytes);
                     }
                 }
                 
@@ -166,14 +189,72 @@ public class CameraPath : MonoBehaviour
                 Debug.Log("[INFO] Finished taking photos.");
                 playdatshit = false;
                 string jsonString = JsonUtility.ToJson(encodedList, true);
-                using(TextWriter tw = new StreamWriter(Path.Combine(Application.persistentDataPath, "lre_data.json")))
+                // for(int i = 0; i < myPath.getLength(); ++i){
+                //     // System.Drawing.Image im = Utility.loadImage(resizeImages[i], new System.Drawing.Size(Screen.width, Screen.height));
+                //     // System.IO.File.WriteAllText(resizeImages[i], "test");
+                //     // im.Save(resizeImages[i]);
+                //     // im.Dispose();
+                //     // Utility.resizeInPlace(resizeImages[i], new System.Drawing.Size(Screen.width, Screen.height));
+                //     // byte[] imbytes = File.ReadAllBytes(resizeImages[i]);
+                //     // Texture2D captchaa = new Texture2D(Screen.width-1, Screen.height);
+                //     // captchaa.LoadImage(imbytes);
+                //     // captchaa.Apply();
+                //     // // captchaa = Utility.Resize(captchaa, Screen.width, Screen.height);
+                    
+                //     // // captchaa.Resize(Screen.width, Screen.height, TextureFormat.RGBA32, false);
+                //     // // captchaa.Apply();
+                //     // Debug.Log("w, h: " + captchaa.width+", "+captchaa.height);
+                //     // File.WriteAllBytes(resizeImages[i], captchaa.EncodeToPNG());
+                // }
+                using(TextWriter tw = new StreamWriter(Path.Combine("Resources", "lre_data.json")))
                 {
                     tw.Write(jsonString);
                     Debug.Log("[INFO] Saved json.");
                 }
             }
+            // grab = true;
+
         }
+        
     }
+    // IEnumerator<WaitForEndOfFrame> RecordFrame()
+    // {
+    //     yield return new WaitForEndOfFrame();
+    //     var texture = ScreenCapture.CaptureScreenshotAsTexture();
+    //     // do something with texture
+    //     File.WriteAllBytes(resizeImages[resizeImages.Count-1], texture.EncodeToPNG());
+
+    //     // cleanup
+    //     UnityEngine.Object.Destroy(texture);
+    // }
+
+    // public void LateUpdate()
+    // {
+    //     // int IDtaken = 0;
+    //     // if(resizeImages.Count > 0 && IDtaken < resizeImages.Count){
+    //     //     Texture2D captchaa = new Texture2D(Screen.width, Screen.height);
+    //     //     captchaa.ReadPixels(new Rect(0,0,Screen.width,Screen.height),0,0);
+    //     //     captchaa.Apply();
+    //     //     File.WriteAllBytes(resizeImages[resizeImages.Count-1], captchaa.EncodeToPNG());
+    //     //     IDtaken++;
+    //     // }
+    //     grab = true;
+    // }
+    // private void OnPostRender()
+    // {
+    //     // int IDtaken = 0;
+    //     if(grab && resizeImages.Count > 0 && IDtaken < resizeImages.Count){
+    //         //Create a new texture with the width and height of the screen
+    //         Texture2D captchaa = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+    //         //Read the pixels in the Rect starting at 0,0 and ending at the screen's width and height
+    //         captchaa.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0, false);
+    //         captchaa.Apply();
+    //         File.WriteAllBytes(resizeImages[resizeImages.Count-1], captchaa.EncodeToPNG());
+    //         IDtaken++;
+    //         grab = false;
+    //     }
+    // }
+
     Texture2D RLE2alpha8(RLERaw rle, bool flipVertical){
         Texture2D texture = new Texture2D(rle.size[0], rle.size[1], TextureFormat.Alpha8, false);
         byte[] pixelBuffer = new byte[rle.size[0] * rle.size[1]];
@@ -208,7 +289,7 @@ public class CameraPath : MonoBehaviour
         int i = 0;
         foreach (string t in focusTags){
             // get rectangles:
-            List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
+            List<Vector3Int[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
             if(objectRectangles.Count == 0){
                 continue;
             }
@@ -319,13 +400,13 @@ public class CameraPath : MonoBehaviour
         boundingBox[3] = Screen.height - bottomRowIndex;
         return boundingBox;
     }
-    Dictionary<int,Dictionary<int,int>> rectangles2Lines1Tag(List<Vector3[]> objectRectangles, string targetTag){
+    Dictionary<int,Dictionary<int,int>> rectangles2Lines1Tag(List<Vector3Int[]> objectRectangles, string targetTag){
         Dictionary<int,Dictionary<int,int>> perLineValues= new Dictionary<int, Dictionary<int,int>>();
         RaycastHit hit;
         if(objectRectangles.Count == 0) Debug.Log("[WARNING] No object rectangles found!");
         Ray ray;
-        Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
-        foreach (Vector3[] rectangle in objectRectangles)
+        Vector3Int screenUV = new Vector3Int(Screen.height-1,0,0);
+        foreach (Vector3Int[] rectangle in objectRectangles)
         {
             for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){ // ok
                 bool hitLastOne = false;
@@ -366,7 +447,7 @@ public class CameraPath : MonoBehaviour
                             hitLastOne = false;
                         }
                     }
-                    if(c+1 == (int)rectangle[1].x){
+                    if(c+1 == rectangle[1].x){
                         if(hitLastOne){ // doesnt reach here maybe because the last point in the row it hits, so the next point cannot be missed
                             if(!perLineValues.ContainsKey(r)){
                                 perLineValues[r] = new Dictionary<int,int>();
@@ -382,17 +463,21 @@ public class CameraPath : MonoBehaviour
         }
         return perLineValues;
     }
-    List<Vector3[]> probeImage(int stepX, int stepY, string targetTag){
+    List<Vector3Int[]> probeImage(int stepX, int stepY, string targetTag){
         RaycastHit hit;
         Ray ray;
-        Vector3 screenUV = new Vector3(Screen.height-1,0f,0f);
+        Vector3Int screenUV = new Vector3Int(Screen.height-1,0,0);
         Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
         bool lastOneHit = false;
-        List<Vector3[]> rasterRectangles = new List<Vector3[]>();
-        int lastRectangle = 0;
+        List<Vector3Int[]> rasterRectangles = new List<Vector3Int[]>();
+        int lastRectangleIndex = 0;
         // bool detectedTag = false;
         for(int r = 0; r < Screen.height; r+=stepY){  // top to bottom
             for(int c = 0; c < Screen.width; c+=stepX){ // left to right
+                if(c == 0 && lastOneHit){
+                    lastOneHit = false;
+                    ++lastRectangleIndex;
+                }
                 screenUV.x = c;
                 screenUV.y = r;
                 ray = myCamera.ScreenPointToRay(screenUV); // very slow
@@ -400,24 +485,24 @@ public class CameraPath : MonoBehaviour
                 if (Physics.Raycast(ray, out hit)) { // this one hit but the last one didn't
                     if(hit.transform.tag == targetTag){
                         if(!lastOneHit){
-                            rasterRectangles.Add(new Vector3[2]);
-                            rasterRectangles[lastRectangle][0] = new Vector3(Mathf.Max(c-stepX, 0f), r, 0f);
-                            rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
+                            rasterRectangles.Add(new Vector3Int[2]);
+                            rasterRectangles[lastRectangleIndex][0] = new Vector3Int(Mathf.Max(c-stepX, 0), r, 0);
+                            rasterRectangles[lastRectangleIndex][1] = new Vector3Int(Screen.width, Mathf.Min(r+stepY, Screen.height), 0);
                             // save previous x and previous y
                             lastOneHit = true;
                             // detectedTag = true;
                         }
                     } else { // this one didn't hit
                         if(lastOneHit){ // but the last one did
-                            rasterRectangles[lastRectangle][1].x = c+1;
-                            ++lastRectangle;
+                            rasterRectangles[lastRectangleIndex][1].x = c+1;
+                            ++lastRectangleIndex;
                             lastOneHit = false;
                         }
                     }
                 } else {
                     if(lastOneHit){ // but the last one did
-                        rasterRectangles[lastRectangle][1].x = c+1;
-                        ++lastRectangle;
+                        rasterRectangles[lastRectangleIndex][1].x = c+1;
+                        ++lastRectangleIndex;
                         lastOneHit = false;
                     }
                 }
@@ -425,6 +510,14 @@ public class CameraPath : MonoBehaviour
         }
         // if(!detectedTag){
         //     Debug.Log("[WARNING] Haven't detected tag: "+targetTag);
+        // }
+        // int i = 0;
+        // Debug.Log("(w,h): ("+Screen.width+","+Screen.height+")");
+        // foreach (var item in rasterRectangles)
+        // {
+        //     Debug.Log("rec"+i.ToString()+": (x0,y0): ("+item[0].x+", "+item[0].y+")");
+        //     Debug.Log("rec"+i.ToString()+": (x1,y1): ("+item[1].x+", "+item[1].y+")");
+        //     i++;
         // }
         return rasterRectangles;
     }
