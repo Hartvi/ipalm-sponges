@@ -10,18 +10,14 @@ public class CameraPath : MonoBehaviour
 {
     private Camera myCamera;
     SpherePath myPath;
-    string screenshotName = "pic";
-    int currentScreenshotID = 0;
     public Transform focusObject;
     bool playdatshit = false;
-    public GameObject realObjects;
-    public GameObject segmentObjects;
     public GameObject[] targetObjects;
     private Dictionary<string, int> objectType;
     public int horizontalSteps = 6;
     public int verticalSteps = 5;
     public float distance = 5;
-    public float minZangle = -0.2f;
+    public float minZangle = 0.2f;
     public float maxZangle = Mathf.PI/2;
     public int probeWidth = 9;
     public int probeHeight = 6;
@@ -33,7 +29,8 @@ public class CameraPath : MonoBehaviour
     System.Random rand = new System.Random();
     List<int[]> combsCombined;
     public bool randomObjectActivation = false;
-    public int numberOfObjects = 9;
+    // public int numberOfObjects = 9;
+    public bool saveBinaryMask = false;
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
@@ -53,9 +50,9 @@ public class CameraPath : MonoBehaviour
     }
     void Start(){
         targetObjects = FindGameObjectsWithRadicalInTag(focusTagRadical);
-        List<int[]> combs3 = generateCombinations(numberOfObjects, 3);
-        List<int[]> combs2 = generateCombinations(numberOfObjects, 2);
-        List<int[]> combs1 = generateCombinations(numberOfObjects, 1);
+        List<int[]> combs3 = generateCombinations(targetObjects.Length, 3);
+        List<int[]> combs2 = generateCombinations(targetObjects.Length, 2);
+        List<int[]> combs1 = generateCombinations(targetObjects.Length, 1);
         combsCombined = new List<int[]>();
         for (int i = 0; i < 4; i++){
             combsCombined.AddRange(combs1);
@@ -67,20 +64,16 @@ public class CameraPath : MonoBehaviour
             combsCombined.AddRange(combs3);
         }
 
-        foreach (int[] comb in combsCombined)
-        {
-            if(comb.Length == 3){
-                Debug.Log("combination: "+comb[0].ToString()+comb[1].ToString()+comb[2].ToString());
-            } else if(comb.Length == 2){
-                Debug.Log("combination: "+comb[0].ToString()+comb[1].ToString());
-            } else if(comb.Length == 1){
-                Debug.Log("combination: "+comb[0].ToString());
-            }
-            // foreach (int item in comb)
-            // {
-            //     Debug.Log(item);
-            // }
-        }
+        // foreach (int[] comb in combsCombined)
+        // {
+        //     if(comb.Length == 3){
+        //         Debug.Log("combination: "+comb[0].ToString()+comb[1].ToString()+comb[2].ToString());
+        //     } else if(comb.Length == 2){
+        //         Debug.Log("combination: "+comb[0].ToString()+comb[1].ToString());
+        //     } else if(comb.Length == 1){
+        //         Debug.Log("combination: "+comb[0].ToString());
+        //     }
+        // }
     }
     void Update()
     {
@@ -92,49 +85,60 @@ public class CameraPath : MonoBehaviour
             System.IO.Directory.CreateDirectory(folderPath);
         }
         if(Input.GetMouseButtonDown(1)){
-            for(int j = 0; j < targetObjects.Length;++j){
-                targetObjects[j].SetActive(false);
-            }
             int randomCombination = rand.Next(combsCombined.Count);
-            for(int j = 0; j < combsCombined[randomCombination].Length;++j){
-                // this is the index of combination of objects for this shot
-                Debug.Log("Setting active object: "+j+"  tag: "+targetObjects[combsCombined[randomCombination][j]].tag);
-                // Debug.Log("targetObjects length: "+targetObjects.Length);
-                targetObjects[combsCombined[randomCombination][j]].SetActive(true);
+            for(int j = 0; j < targetObjects.Length;++j){
+                targetObjects[j].SetActive(Array.Exists(combsCombined[randomCombination], el => el == j));
+                if(Array.Exists(combsCombined[randomCombination], el => el == j)){
+                    Debug.Log("Setting active "+j);
+                } else {
+                    Debug.Log("Setting inactive "+j);
+                }
             }
+            // for(int j = 0; j < combsCombined[randomCombination].Length;++j){
+            //     // this is the index of combination of objects for this shot
+            //     Debug.Log("Setting active object: "+j+"  tag: "+targetObjects[combsCombined[randomCombination][j]].tag);
+            //     // Debug.Log("targetObjects length: "+targetObjects.Length);
+            //     targetObjects[combsCombined[randomCombination][j]].SetActive(true);
+            // }
             
         }
         
         if(playdatshit){
             if(myPath.next()){
                 if(randomObjectActivation){
-                    for(int j = 0; j < targetObjects.Length;++j){
-                        targetObjects[j].SetActive(false);
-                    }
+                    // for(int j = 0; j < targetObjects.Length;++j){
+                    //     targetObjects[j].SetActive(false);
+                    // }
                     int randomCombination = rand.Next(combsCombined.Count);
-                    if(combsCombined[randomCombination].Length == 3){
-                        Debug.Log("combination: "+combsCombined[randomCombination][0].ToString()+combsCombined[randomCombination][1].ToString()+combsCombined[randomCombination][2].ToString());
-                    } else if(combsCombined[randomCombination].Length == 2){
-                        Debug.Log("combination: "+combsCombined[randomCombination][0].ToString()+combsCombined[randomCombination][1].ToString());
-                    } else if(combsCombined[randomCombination].Length == 1){
-                        Debug.Log("combination: "+combsCombined[randomCombination][0].ToString());
-                    } else {
-                        Debug.Log("[ERROR] Unwanted combination length!! " + combsCombined[randomCombination].Length);
+                    for(int j = 0; j < targetObjects.Length;++j){
+                        targetObjects[j].SetActive(Array.Exists(combsCombined[randomCombination], el => el == j));
                     }
-                    for(int j = 0; j < combsCombined[randomCombination].Length;++j){
-                        // this is the index of combination of objects for this shot
-                        // Debug.Log("Setting active object: "+j+"  tag: "+targetObjects[combsCombined[randomCombination][j]].tag);
-                        // Debug.Log("targetObjects length: "+targetObjects.Length);
-                        targetObjects[combsCombined[randomCombination][j]].SetActive(true);
-                    }
-                    int r = rand.Next(combsCombined[randomCombination].Length);
+                    // if(combsCombined[randomCombination].Length == 3){
+                    //     Debug.Log("combination: "+combsCombined[randomCombination][0].ToString()+combsCombined[randomCombination][1].ToString()+combsCombined[randomCombination][2].ToString());
+                    // } else if(combsCombined[randomCombination].Length == 2){
+                    //     Debug.Log("combination: "+combsCombined[randomCombination][0].ToString()+combsCombined[randomCombination][1].ToString());
+                    // } else if(combsCombined[randomCombination].Length == 1){
+                    //     Debug.Log("combination: "+combsCombined[randomCombination][0].ToString());
+                    // } else {
+                    //     Debug.Log("[ERROR] Unwanted combination length!! " + combsCombined[randomCombination].Length);
+                    // }
+                    // for(int j = 0; j < combsCombined[randomCombination].Length;++j){
+                    //     // this is the index of combination of objects for this shot
+                    //     // Debug.Log("targetObjects length: "+targetObjects.Length);
+                    //     targetObjects[combsCombined[randomCombination][j]].SetActive(true);
+                    //     Debug.Log("Setting active object: "+j+"  tag: "+targetObjects[combsCombined[randomCombination][j]].tag);
+                    // }
+                    int r = rand.Next(combsCombined[randomCombination].Length); // 1: 0; 2: 0,1; 3: 0,1,2
+                    int cnt = 0;
                     // 0-7 index of object to look at
                     foreach(var obj in targetObjects){
                         if(obj.activeSelf){
-                            
+                            if(cnt == r){
+                                focusObject = obj.transform;
+                            }
+                            cnt++;
                         }
                     }
-                    focusObject = targetObjects[rand.Next(targetObjects.Length)].transform;
                     transform.position = focusObject.position + myPath.nextPosition();
                     transform.LookAt(focusObject.position);
                     
@@ -142,62 +146,99 @@ public class CameraPath : MonoBehaviour
                     transform.position = focusObject.position + myPath.nextPosition();
                     transform.LookAt(focusObject.position);
                 }
-                string scrPath, folderName = "images"+"/";
-                scrPath = Application.persistentDataPath + "/" + myPath.currentID.ToString() + ".png";
+                string scrPath, folderName = "images"+"/", imageName = myPath.currentID.ToString() + ".png";
+                int maskID = myPath.currentID;
+                // string maskFileName = "/SavedScreen"+myPath.currentID.ToString()+"-"+i.ToString()+".png";
+                scrPath = Application.persistentDataPath + "/" + folderName + imageName;
                 ScreenCapture.CaptureScreenshot(scrPath);
-                // int i = 0;
-                RLEncoding newEncoding = new RLEncoding(); // new single encoding for one instance of (object,material,image)
-                newEncoding.annotations = new List<Annotation>();
-                foreach (string t in focusTags){
-                    // get rectangles:
-                    List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
-                    // get RLE for each line, {row: {start: length}} :
-                    Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
-                    // get bounding box from line RLE:
-                    int[] boundingBox = RLELines2BoundingBox(lineAnnotation);
-                    // Debug.Log("topLeft: "+boundingBox[0]+"  bottomRight: "+boundingBox[1]);//
-                    
-                    // get RLE for whole image composed from RLE of each line:
-                    List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
-                    // save the RLE of image into serializable class:
-                    newEncoding.file_name = folderName + myPath.currentID.ToString()+".png"; // image name
-                    newEncoding.image_id = myPath.currentID; // image name
-                    newEncoding.height = Screen.height; // image height
-                    newEncoding.width = Screen.width; // image width
-                    // newEncoding.material_id = focusMaterial; // material of focus, e.g. foam
-                    // newEncoding.object_id = focusObjectID; // object type, e.g. sponge
-                    // newEncoding.RLE = codedMask; // the actual RLE encoding for a single (object,material)
-                    // newEncoding.boundingBox = boundingBox;
-                    Annotation annotation = new Annotation();
-                    RLERaw rawRLE = new RLERaw();
-                    annotation.bbox = boundingBox;
-                    annotation.material_id = focusMaterial; // material of focus, e.g. foam
-                    annotation.object_id = focusObjectID; // object type, e.g. sponge
-                    annotation.image_id = myPath.currentID;
-                    annotation.bbox_mode = 0;
-                    rawRLE.counts = codedMask;
-                    rawRLE.size = new int[]{Screen.width, Screen.height};
-                    annotation.segmentation = rawRLE;
-                    newEncoding.annotations.Add(annotation);
+                // save encoding for given (object,material,image)
+                encodedList.ims[myPath.currentID] = createRLEncoding4Image(folderName, imageName, maskID); 
+                if(saveBinaryMask){
+                    for (int i = 0; i < encodedList.ims[myPath.currentID].annotations.Count; i++)
+                    {
+                        Texture2D tex = RLE2alpha8(encodedList.ims[myPath.currentID].annotations[i].segmentation, true);
+                        byte[] bytes = tex.EncodeToPNG();
+                        File.WriteAllBytes(Path.Combine(Application.persistentDataPath, "images/"+maskID.ToString()+"-"+i.ToString()+".png"), bytes);
+                    }
                 }
-                encodedList.ims[myPath.currentID] = newEncoding; // save encoding for given (object,material,image)
-                // byte[] bytees = new byte[]{0x11, 0x22, 0x33};
-                // foreach (var item in bytees)
-                // {
-                //     Debug.Log("byte: "+item);
-                // }
                 
             } else {
                 Debug.Log("[INFO] Finished taking photos.");
                 playdatshit = false;
                 string jsonString = JsonUtility.ToJson(encodedList, true);
-                using(TextWriter tw = new StreamWriter(Application.persistentDataPath + "/" + "lre_data" + ".json"))
+                using(TextWriter tw = new StreamWriter(Path.Combine(Application.persistentDataPath, "lre_data.json")))
                 {
                     tw.Write(jsonString);
                     Debug.Log("[INFO] Saved json.");
                 }
             }
         }
+    }
+    Texture2D RLE2alpha8(RLERaw rle, bool flipVertical){
+        Texture2D texture = new Texture2D(rle.size[0], rle.size[1], TextureFormat.Alpha8, false);
+        byte[] pixelBuffer = new byte[rle.size[0] * rle.size[1]];
+        byte[] ret;
+        int runningIndex = rle.size[0] * rle.size[1]-1;
+        // rle to array
+        for(int i=rle.counts.Count-1;i>-1;--i){
+            if(i % 2 == 1){
+                for(int j=0;j<rle.counts[i];++j){
+                    pixelBuffer[runningIndex - j] = 0xFF;
+                }
+            }
+            runningIndex -= rle.counts[i];
+        }
+        if(flipVertical){
+            byte[] temp = new byte[pixelBuffer.Length];
+            // pixelBuffer.CopyTo(temp, 0);
+            for(int i=0;i<rle.size[1];++i){
+                Array.Copy(pixelBuffer, i*rle.size[0], temp, pixelBuffer.Length-rle.size[0]*(i+1), rle.size[0]);
+            }
+            ret = temp;
+        } else {
+            ret = pixelBuffer;
+        }
+        texture.LoadRawTextureData(ret);
+        texture.Apply();
+        return texture;
+    }
+    RLEncoding createRLEncoding4Image(string folderName, string imageName, int maskID){
+        RLEncoding newEncoding = new RLEncoding(); // new single encoding for one instance of (image)
+        newEncoding.annotations = new List<Annotation>();
+        int i = 0;
+        foreach (string t in focusTags){
+            // get rectangles:
+            List<Vector3[]> objectRectangles = probeImage(probeWidth, probeHeight, t); // assuming simple landscape // ok
+            if(objectRectangles.Count == 0){
+                continue;
+            }
+            // get RLE for each line, {row: {start: length}} :
+            Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
+            // get bounding box from line RLE:
+            int[] boundingBox = RLELines2BoundingBox(lineAnnotation);
+            // get RLE for whole image composed from RLE of each line:
+            List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
+            // save the RLE of image into serializable class:
+
+            newEncoding.file_name = folderName + imageName; // image name
+            newEncoding.image_id = myPath.currentID; // image name
+            newEncoding.height = Screen.height; // image height
+            newEncoding.width = Screen.width; // image width
+            Annotation annotation = new Annotation();
+            RLERaw rawRLE = new RLERaw();
+            annotation.bbox = boundingBox;
+            annotation.material_id = focusMaterial; // material of focus, e.g. foam
+            annotation.object_id = focusObjectID; // object type, e.g. sponge
+            annotation.image_id = myPath.currentID;
+            annotation.bbox_mode = 0;
+            annotation.mask_file = Path.Combine("images/",maskID.ToString()+"-"+i.ToString()+".png");
+            rawRLE.counts = codedMask;
+            rawRLE.size = new int[]{Screen.width, Screen.height};
+            annotation.segmentation = rawRLE;
+            newEncoding.annotations.Add(annotation);
+            i++;
+        }
+        return newEncoding;
     }
     List<int> getRLEFromLines(int width, int height, Dictionary<int,Dictionary<int,int>> lines){
         int totalLength = 0;
@@ -237,7 +278,7 @@ public class CameraPath : MonoBehaviour
                 }
             }
         }
-        lengths.Add(currentLength);
+        lengths.Add(currentLength); // makes the last length exist even though it is 0
         totalLength += currentLength; // parallel counting
         if(totalLength != Screen.height*Screen.width){
             Debug.Log("[ERROR] RLE sum not checking up. RLE sum: "+totalLength+"  vs: "+(Screen.height*Screen.width));
@@ -349,7 +390,7 @@ public class CameraPath : MonoBehaviour
         bool lastOneHit = false;
         List<Vector3[]> rasterRectangles = new List<Vector3[]>();
         int lastRectangle = 0;
-        bool detectedTag = false;
+        // bool detectedTag = false;
         for(int r = 0; r < Screen.height; r+=stepY){  // top to bottom
             for(int c = 0; c < Screen.width; c+=stepX){ // left to right
                 screenUV.x = c;
@@ -364,27 +405,27 @@ public class CameraPath : MonoBehaviour
                             rasterRectangles[lastRectangle][1] = new Vector3(Screen.width, Mathf.Min(r+stepY, Screen.height), 0f);
                             // save previous x and previous y
                             lastOneHit = true;
-                            detectedTag = true;
+                            // detectedTag = true;
                         }
                     } else { // this one didn't hit
                         if(lastOneHit){ // but the last one did
-                            rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
+                            rasterRectangles[lastRectangle][1].x = c+1;
                             ++lastRectangle;
                             lastOneHit = false;
                         }
                     }
                 } else {
                     if(lastOneHit){ // but the last one did
-                        rasterRectangles[lastRectangle][1].x = Mathf.Min(c+1, Screen.width);
+                        rasterRectangles[lastRectangle][1].x = c+1;
                         ++lastRectangle;
                         lastOneHit = false;
                     }
                 }
             }
         }
-        if(!detectedTag){
-            Debug.Log("[WARNING] Haven't detected tag: "+targetTag);
-        }
+        // if(!detectedTag){
+        //     Debug.Log("[WARNING] Haven't detected tag: "+targetTag);
+        // }
         return rasterRectangles;
     }
     public List<int[]> generateCombinations(int n, int r) {
@@ -418,7 +459,7 @@ public class CameraPath : MonoBehaviour
         var goList = new System.Collections.Generic.List<GameObject>();
         for (int i = 0; i < goArray.Length; i++)
         {
-            if (goArray[i].tag.Contains(radical))
+            if (goArray[i].tag.Contains(radical) && ((goArray[i].transform.parent != null && !goArray[i].transform.parent.tag.Contains(radical)) || goArray[i].transform.parent == null))
             {
                 goList.Add(goArray[i]);
             }
@@ -514,6 +555,7 @@ class Annotation{
     public int object_id;
     public string material_id;
     public int image_id;
+    public string mask_file;
     public RLERaw segmentation;
 }
 
@@ -521,11 +563,3 @@ class Annotation{
 class RLElist{
     public RLEncoding[] ims;
 }
-
-[Serializable]
-enum ObjectType{
-    sponge,
-    cube,
-    die
-}
-
