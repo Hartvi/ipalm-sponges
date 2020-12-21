@@ -31,9 +31,10 @@ public class CameraPath : MonoBehaviour
     public bool randomObjectActivation = false;
     // public int numberOfObjects = 9;
     public bool saveBinaryMask = false;
-    private List<string> resizeImages = new List<string>();
-    int IDtaken = 0;
-    bool grab = false;
+    private int screenshotWidth, screenshotHeight;
+    // private List<string> resizeImages = new List<string>();
+    // int IDtaken = 0;
+    // bool grab = false;
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
@@ -81,11 +82,25 @@ public class CameraPath : MonoBehaviour
     void Update()
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
+            // string tp = Path.Combine(Application.persistentDataPath,"Resources/");
+            ScreenCapture.CaptureScreenshot(Path.Combine(Application.dataPath, "Resources/", "sizeTest.png"));
+            // Texture2D t = ScreenCapture.CaptureScreenshotAsTexture();
+            // Texture2D t = Resources.Load<Texture2D>("test/sizeTest"); // ???? smaller
+            
+            Vector2Int imgSize  = ImageHeader.GetDimensions(Path.Combine(Application.dataPath, "Resources/", "sizeTest.png"));
+            Debug.Log("imgSize.x =" + imgSize.x);
+            Debug.Log("imgSize.y =" + imgSize.y);
+            screenshotWidth = imgSize.x;
+            screenshotHeight = imgSize.y;
+            // imgSize  = ImageHeader.GetDimensions(Application.persistentDataPath+"/0-0.png");
+            // Debug.Log("imgSize.x =" + imgSize.x);
+            // Debug.Log("imgSize.y =" + imgSize.y);
+            
             playdatshit = true;
             encodedList.ims = new RLEncoding[myPath.getLength()];
             string folderPath;
             folderPath = Path.Combine(Application.persistentDataPath,"Resources/","images");
-            Debug.Log(folderPath);
+            Debug.Log("[INFO] Saving data to: "+folderPath);
             System.IO.Directory.CreateDirectory(folderPath);
         }
         if(Input.GetMouseButtonDown(1)){
@@ -154,13 +169,15 @@ public class CameraPath : MonoBehaviour
                 int maskID = myPath.currentID;
                 // string maskFileName = "/SavedScreen"+myPath.currentID.ToString()+"-"+i.ToString()+".png";
                 scrPath = Path.Combine(Application.persistentDataPath,"Resources/","images", imageName);
-                resizeImages.Add(scrPath);
+                // resizeImages.Add(scrPath);
                 // Texture2D captchaa = new Texture2D(Screen.width, Screen.height);
                 // captchaa.ReadPixels(new Rect(0,0,Screen.width,Screen.height),0,0);
                 // captchaa.Apply();
                 // File.WriteAllBytes(scrPath, captchaa.EncodeToPNG());
 
                 ScreenCapture.CaptureScreenshot(scrPath);
+                
+                // File.WriteAllBytes(scrPath, ScreenCapture.CaptureScreenshotAsTexture().EncodeToPNG());
                 // Debug.Log(scrPath);
                 // byte[] imbytes = File.ReadAllBytes(scrPath);
                 // Texture2D captchaa = new Texture2D(Screen.width, Screen.height);
@@ -206,7 +223,7 @@ public class CameraPath : MonoBehaviour
                 //     // Debug.Log("w, h: " + captchaa.width+", "+captchaa.height);
                 //     // File.WriteAllBytes(resizeImages[i], captchaa.EncodeToPNG());
                 // }
-                using(TextWriter tw = new StreamWriter(Path.Combine("Resources", "lre_data.json")))
+                using(TextWriter tw = new StreamWriter(Path.Combine(Application.persistentDataPath, "Resources", "lre_data.json")))
                 {
                     tw.Write(jsonString);
                     Debug.Log("[INFO] Saved json.");
@@ -298,13 +315,13 @@ public class CameraPath : MonoBehaviour
             // get bounding box from line RLE:
             int[] boundingBox = RLELines2BoundingBox(lineAnnotation);
             // get RLE for whole image composed from RLE of each line:
-            List<int> codedMask = getRLEFromLines(Screen.width, Screen.height, lineAnnotation);
+            List<int> codedMask = getRLEFromLines(screenshotWidth, screenshotHeight, lineAnnotation);
             // save the RLE of image into serializable class:
 
             newEncoding.file_name = folderName + imageName; // image name
             newEncoding.image_id = myPath.currentID; // image name
-            newEncoding.height = Screen.height; // image height
-            newEncoding.width = Screen.width; // image width
+            newEncoding.height = screenshotHeight; // image height
+            newEncoding.width = screenshotWidth; // image width
             Annotation annotation = new Annotation();
             RLERaw rawRLE = new RLERaw();
             annotation.bbox = boundingBox;
@@ -314,7 +331,7 @@ public class CameraPath : MonoBehaviour
             annotation.bbox_mode = 0;
             annotation.mask_file = Path.Combine("images/",maskID.ToString()+"-"+i.ToString()+".png");
             rawRLE.counts = codedMask;
-            rawRLE.size = new int[]{Screen.width, Screen.height};
+            rawRLE.size = new int[]{screenshotWidth, screenshotHeight};
             annotation.segmentation = rawRLE;
             newEncoding.annotations.Add(annotation);
             i++;
@@ -361,8 +378,8 @@ public class CameraPath : MonoBehaviour
         }
         lengths.Add(currentLength); // makes the last length exist even though it is 0
         totalLength += currentLength; // parallel counting
-        if(totalLength != Screen.height*Screen.width){
-            Debug.Log("[ERROR] RLE sum not checking up. RLE sum: "+totalLength+"  vs: "+(Screen.height*Screen.width));
+        if(totalLength != screenshotWidth*screenshotHeight){
+            Debug.Log("[ERROR] RLE sum not checking up. RLE sum: "+totalLength+"  vs: "+(screenshotWidth*screenshotHeight));
         }
         return lengths;
     }
@@ -395,9 +412,9 @@ public class CameraPath : MonoBehaviour
         }
         
         boundingBox[0] = maxLeft;
-        boundingBox[1] = Screen.height - topRowIndex;
+        boundingBox[1] = screenshotHeight - topRowIndex;
         boundingBox[2] = maxRight;
-        boundingBox[3] = Screen.height - bottomRowIndex;
+        boundingBox[3] = screenshotHeight - bottomRowIndex;
         return boundingBox;
     }
     Dictionary<int,Dictionary<int,int>> rectangles2Lines1Tag(List<Vector3Int[]> objectRectangles, string targetTag){
@@ -405,14 +422,14 @@ public class CameraPath : MonoBehaviour
         RaycastHit hit;
         if(objectRectangles.Count == 0) Debug.Log("[WARNING] No object rectangles found!");
         Ray ray;
-        Vector3Int screenUV = new Vector3Int(Screen.height-1,0,0);
+        Vector3Int screenUV = new Vector3Int(0,0,0);
         foreach (Vector3Int[] rectangle in objectRectangles)
         {
-            for(int r = (int)rectangle[0].y; r < (int)rectangle[1].y; ++r){ // ok
+            for(int r = rectangle[0].y; r < rectangle[1].y; ++r){ // ok
                 bool hitLastOne = false;
                 int beginHit = 0;
                 int lastHitCount = 0;
-                for(int c = (int)rectangle[0].x; c < (int)rectangle[1].x; ++c){
+                for(int c = rectangle[0].x; c < rectangle[1].x; ++c){
                     screenUV.x = c;
                     screenUV.y = r;
                     ray = myCamera.ScreenPointToRay(screenUV);
@@ -466,14 +483,13 @@ public class CameraPath : MonoBehaviour
     List<Vector3Int[]> probeImage(int stepX, int stepY, string targetTag){
         RaycastHit hit;
         Ray ray;
-        Vector3Int screenUV = new Vector3Int(Screen.height-1,0,0);
-        Texture2D segmentationImage = new Texture2D(Screen.width, Screen.height, TextureFormat.Alpha8, false);
+        Vector3Int screenUV = new Vector3Int(0,0,0);
         bool lastOneHit = false;
         List<Vector3Int[]> rasterRectangles = new List<Vector3Int[]>();
         int lastRectangleIndex = 0;
         // bool detectedTag = false;
-        for(int r = 0; r < Screen.height; r+=stepY){  // top to bottom
-            for(int c = 0; c < Screen.width; c+=stepX){ // left to right
+        for(int r = 0; r < screenshotHeight; r+=stepY){  // top to bottom
+            for(int c = 0; c < screenshotWidth; c+=stepX){ // left to right
                 if(c == 0 && lastOneHit){
                     lastOneHit = false;
                     ++lastRectangleIndex;
@@ -487,7 +503,7 @@ public class CameraPath : MonoBehaviour
                         if(!lastOneHit){
                             rasterRectangles.Add(new Vector3Int[2]);
                             rasterRectangles[lastRectangleIndex][0] = new Vector3Int(Mathf.Max(c-stepX, 0), r, 0);
-                            rasterRectangles[lastRectangleIndex][1] = new Vector3Int(Screen.width, Mathf.Min(r+stepY, Screen.height), 0);
+                            rasterRectangles[lastRectangleIndex][1] = new Vector3Int(screenshotWidth, Mathf.Min(r+stepY, screenshotHeight), 0);
                             // save previous x and previous y
                             lastOneHit = true;
                             // detectedTag = true;
