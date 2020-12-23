@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 2035111234}
-  m_IndirectSpecularColor: {r: 129.43765, g: 159.77829, b: 213.42596, a: 1}
+  m_IndirectSpecularColor: {r: 129.19397, g: 159.5448, b: 213.4047, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -436,7 +436,7 @@ GameObject:
   - component: {fileID: 38822724}
   m_Layer: 0
   m_Name: Quad (21)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -2708,7 +2708,7 @@ GameObject:
   - component: {fileID: 150576396}
   m_Layer: 0
   m_Name: Quad (11)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -2802,7 +2802,7 @@ GameObject:
   - component: {fileID: 151154862}
   m_Layer: 0
   m_Name: Quad (4)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -3362,7 +3362,7 @@ GameObject:
   - component: {fileID: 209063379}
   m_Layer: 0
   m_Name: Quad (6)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -3884,7 +3884,7 @@ GameObject:
   - component: {fileID: 221792774}
   m_Layer: 0
   m_Name: Quad (5)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -4526,7 +4526,7 @@ GameObject:
   - component: {fileID: 245220795}
   m_Layer: 0
   m_Name: Quad (2)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -4620,7 +4620,7 @@ GameObject:
   - component: {fileID: 246897615}
   m_Layer: 0
   m_Name: Quad (23)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -4714,7 +4714,7 @@ GameObject:
   - component: {fileID: 255754406}
   m_Layer: 0
   m_Name: Quad
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -4887,7 +4887,7 @@ GameObject:
   - component: {fileID: 263143597}
   m_Layer: 0
   m_Name: Quad (22)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -4981,7 +4981,7 @@ GameObject:
   - component: {fileID: 264951268}
   m_Layer: 0
   m_Name: Quad (26)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -5431,6 +5431,107 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &302870199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b6606ef2548734bb6d11b9d160bc7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  active: 1
+  m_AdvancedMode: 0
+  rotation:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 360
+  skyIntensityMode:
+    m_OverrideState: 0
+    m_Value: 0
+  exposure:
+    m_OverrideState: 0
+    m_Value: 10
+  multiplier:
+    m_OverrideState: 0
+    m_Value: 1
+    min: 0
+  upperHemisphereLuxValue:
+    m_OverrideState: 0
+    m_Value: 1
+    min: 0
+  upperHemisphereLuxColor:
+    m_OverrideState: 0
+    m_Value: {x: 0, y: 0, z: 0}
+  desiredLuxValue:
+    m_OverrideState: 0
+    m_Value: 20000
+  updateMode:
+    m_OverrideState: 0
+    m_Value: 0
+  updatePeriod:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+  includeSunInBaking:
+    m_OverrideState: 0
+    m_Value: 0
+  hdriSky:
+    m_OverrideState: 0
+    m_Value: {fileID: 8900000, guid: 54a3a0570aebe8949bec4966f1376581, type: 3}
+  enableBackplate:
+    m_OverrideState: 0
+    m_Value: 0
+  backplateType:
+    m_OverrideState: 0
+    m_Value: 0
+  groundLevel:
+    m_OverrideState: 0
+    m_Value: 0
+  scale:
+    m_OverrideState: 0
+    m_Value: {x: 32, y: 32}
+  projectionDistance:
+    m_OverrideState: 0
+    m_Value: 16
+    min: 0.0000001
+  plateRotation:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 360
+  plateTexRotation:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 360
+  plateTexOffset:
+    m_OverrideState: 0
+    m_Value: {x: 0, y: 0}
+  blendAmount:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 100
+  shadowTint:
+    m_OverrideState: 0
+    m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    hdr: 0
+    showAlpha: 1
+    showEyeDropper: 1
+  pointLightShadow:
+    m_OverrideState: 0
+    m_Value: 0
+  dirLightShadow:
+    m_OverrideState: 0
+    m_Value: 0
+  rectLightShadow:
+    m_OverrideState: 0
+    m_Value: 0
 --- !u!1 &303325280
 GameObject:
   m_ObjectHideFlags: 0
@@ -5687,7 +5788,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Profile: {fileID: 11400000, guid: a123fc0ac58cb774e8592c925f167e7c, type: 2}
   m_StaticLightingSkyUniqueID: 1
-  m_SkySettings: {fileID: 747383712}
+  m_SkySettings: {fileID: 302870199}
   m_SkySettingsFromProfile: {fileID: -1658960478407648048, guid: a123fc0ac58cb774e8592c925f167e7c,
     type: 2}
 --- !u!4 &313761475
@@ -6773,7 +6874,7 @@ GameObject:
   - component: {fileID: 372897735}
   m_Layer: 0
   m_Name: Quad (14)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -7204,7 +7305,7 @@ GameObject:
   - component: {fileID: 399586033}
   m_Layer: 0
   m_Name: Quad (10)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -8715,7 +8816,7 @@ GameObject:
   - component: {fileID: 565296108}
   m_Layer: 0
   m_Name: Quad (17)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -10759,7 +10860,7 @@ GameObject:
   - component: {fileID: 705455101}
   m_Layer: 0
   m_Name: Quad (1)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -11099,7 +11200,7 @@ GameObject:
   - component: {fileID: 744414903}
   m_Layer: 0
   m_Name: Quad (13)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -11179,107 +11280,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 744414901}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &747383712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59b6606ef2548734bb6d11b9d160bc7e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  active: 1
-  m_AdvancedMode: 0
-  rotation:
-    m_OverrideState: 0
-    m_Value: 0
-    min: 0
-    max: 360
-  skyIntensityMode:
-    m_OverrideState: 0
-    m_Value: 0
-  exposure:
-    m_OverrideState: 0
-    m_Value: 10
-  multiplier:
-    m_OverrideState: 0
-    m_Value: 1
-    min: 0
-  upperHemisphereLuxValue:
-    m_OverrideState: 0
-    m_Value: 1
-    min: 0
-  upperHemisphereLuxColor:
-    m_OverrideState: 0
-    m_Value: {x: 0, y: 0, z: 0}
-  desiredLuxValue:
-    m_OverrideState: 0
-    m_Value: 20000
-  updateMode:
-    m_OverrideState: 0
-    m_Value: 0
-  updatePeriod:
-    m_OverrideState: 0
-    m_Value: 0
-    min: 0
-  includeSunInBaking:
-    m_OverrideState: 0
-    m_Value: 0
-  hdriSky:
-    m_OverrideState: 0
-    m_Value: {fileID: 8900000, guid: 54a3a0570aebe8949bec4966f1376581, type: 3}
-  enableBackplate:
-    m_OverrideState: 0
-    m_Value: 0
-  backplateType:
-    m_OverrideState: 0
-    m_Value: 0
-  groundLevel:
-    m_OverrideState: 0
-    m_Value: 0
-  scale:
-    m_OverrideState: 0
-    m_Value: {x: 32, y: 32}
-  projectionDistance:
-    m_OverrideState: 0
-    m_Value: 16
-    min: 0.0000001
-  plateRotation:
-    m_OverrideState: 0
-    m_Value: 0
-    min: 0
-    max: 360
-  plateTexRotation:
-    m_OverrideState: 0
-    m_Value: 0
-    min: 0
-    max: 360
-  plateTexOffset:
-    m_OverrideState: 0
-    m_Value: {x: 0, y: 0}
-  blendAmount:
-    m_OverrideState: 0
-    m_Value: 0
-    min: 0
-    max: 100
-  shadowTint:
-    m_OverrideState: 0
-    m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    hdr: 0
-    showAlpha: 1
-    showEyeDropper: 1
-  pointLightShadow:
-    m_OverrideState: 0
-    m_Value: 0
-  dirLightShadow:
-    m_OverrideState: 0
-    m_Value: 0
-  rectLightShadow:
-    m_OverrideState: 0
-    m_Value: 0
 --- !u!1 &761896402
 GameObject:
   m_ObjectHideFlags: 0
@@ -11531,7 +11531,7 @@ GameObject:
   - component: {fileID: 773977843}
   m_Layer: 0
   m_Name: Quad (20)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -11625,7 +11625,7 @@ GameObject:
   - component: {fileID: 778182506}
   m_Layer: 0
   m_Name: Quad (13)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -11798,7 +11798,7 @@ GameObject:
   - component: {fileID: 786696134}
   m_Layer: 0
   m_Name: Quad (3)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -12328,7 +12328,7 @@ GameObject:
   - component: {fileID: 818891932}
   m_Layer: 0
   m_Name: Quad (12)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -12955,7 +12955,7 @@ GameObject:
   - component: {fileID: 844119055}
   m_Layer: 0
   m_Name: Quad (24)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -13049,7 +13049,7 @@ GameObject:
   - component: {fileID: 848404651}
   m_Layer: 0
   m_Name: Quad (7)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -13394,7 +13394,7 @@ GameObject:
   - component: {fileID: 913165616}
   m_Layer: 0
   m_Name: Quad (2)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -13488,7 +13488,7 @@ GameObject:
   - component: {fileID: 921325135}
   m_Layer: 0
   m_Name: Quad (25)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -14288,7 +14288,7 @@ GameObject:
   - component: {fileID: 955073281}
   m_Layer: 0
   m_Name: Quad (8)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -15168,7 +15168,7 @@ GameObject:
   - component: {fileID: 1008533408}
   m_Layer: 0
   m_Name: Quad (8)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -15636,7 +15636,7 @@ GameObject:
   - component: {fileID: 1061446921}
   m_Layer: 0
   m_Name: Quad (16)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -16474,7 +16474,7 @@ GameObject:
   - component: {fileID: 1137195701}
   m_Layer: 0
   m_Name: Quad (9)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -17536,7 +17536,7 @@ GameObject:
   - component: {fileID: 1235875739}
   m_Layer: 0
   m_Name: Quad (14)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -18418,7 +18418,7 @@ GameObject:
   - component: {fileID: 1297650286}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18604,8 +18604,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 838bf61beacf06f4c86511b50c2d34c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  focusObject: {fileID: 1216872150}
-  targetObjects: []
   horizontalSteps: 49
   verticalSteps: 29
   distance: 3
@@ -18614,8 +18612,6 @@ MonoBehaviour:
   probeWidthHalf: 14
   probeHeightHalf: 14
   focusTagRadical: sp
-  focusMaterial: foam
-  focusObjectID: 13
   randomObjectActivation: 1
   saveBinaryMask: 1
 --- !u!114 &1297650286
@@ -19459,7 +19455,7 @@ GameObject:
   - component: {fileID: 1378530580}
   m_Layer: 0
   m_Name: Quad
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -19553,7 +19549,7 @@ GameObject:
   - component: {fileID: 1387501505}
   m_Layer: 0
   m_Name: Quad (7)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -20353,7 +20349,7 @@ GameObject:
   - component: {fileID: 1423125209}
   m_Layer: 0
   m_Name: Quad (11)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -23006,7 +23002,7 @@ GameObject:
   - component: {fileID: 1644745874}
   m_Layer: 0
   m_Name: Quad (6)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -23595,7 +23591,7 @@ GameObject:
   - component: {fileID: 1666905038}
   m_Layer: 0
   m_Name: Quad (4)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -23877,7 +23873,7 @@ GameObject:
   - component: {fileID: 1681963141}
   m_Layer: 0
   m_Name: Quad (29)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -24034,7 +24030,7 @@ GameObject:
   - component: {fileID: 1695819920}
   m_Layer: 0
   m_Name: Quad (15)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -24128,7 +24124,7 @@ GameObject:
   - component: {fileID: 1698953216}
   m_Layer: 0
   m_Name: Quad (27)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -26245,7 +26241,7 @@ GameObject:
   - component: {fileID: 1834843257}
   m_Layer: 0
   m_Name: Quad (3)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -27167,7 +27163,7 @@ GameObject:
   - component: {fileID: 1879270864}
   m_Layer: 0
   m_Name: Quad (19)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -27887,7 +27883,7 @@ GameObject:
   - component: {fileID: 1941875043}
   m_Layer: 0
   m_Name: Quad (5)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -28700,7 +28696,7 @@ GameObject:
   - component: {fileID: 1997139775}
   m_Layer: 0
   m_Name: Quad (12)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -29332,7 +29328,7 @@ GameObject:
   - component: {fileID: 2035988921}
   m_Layer: 0
   m_Name: Quad (18)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -29505,7 +29501,7 @@ GameObject:
   - component: {fileID: 2042413952}
   m_Layer: 0
   m_Name: Quad (1)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -30612,7 +30608,7 @@ GameObject:
   - component: {fileID: 2135905282}
   m_Layer: 0
   m_Name: Quad (10)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -30706,7 +30702,7 @@ GameObject:
   - component: {fileID: 2143878862}
   m_Layer: 0
   m_Name: Quad (28)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -30800,7 +30796,7 @@ GameObject:
   - component: {fileID: 2146677261}
   m_Layer: 0
   m_Name: Quad (9)
-  m_TagString: bck
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295

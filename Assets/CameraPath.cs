@@ -9,21 +9,21 @@ using System.IO;
 public class CameraPath : MonoBehaviour
 {
     private Camera myCamera;
-    SpherePath myPath;
-    public Transform focusObject;
-    bool playdatshit = false;
-    public GameObject[] targetObjects;
+    private SpherePath myPath;
+    private Transform focusObject;
+    private bool playdatshit = false;
+    private GameObject[] targetObjects;
     private Dictionary<string, int> objectType;
     public int horizontalSteps = 6;
     public int verticalSteps = 5;
-    public float distance = 5;
+    public float distance = 3;
     public float minZangle = 0.2f;
     public float maxZangle = Mathf.PI/2;
     public int probeWidthHalf = 9;
-    public int probeHeightHalf = 6;
+    public int probeHeightHalf = 9;
     public string focusTagRadical = "sp";
-    public string focusMaterial = "foam";
-    public int focusObjectID = 13; // should be sponge
+    // public string focusMaterial = "foam";
+    // public int focusObjectID = 13; // should be sponge
     RLElist encodedList = new RLElist();
     List<string> focusTags;
     System.Random rand = new System.Random();
@@ -32,8 +32,8 @@ public class CameraPath : MonoBehaviour
     // public int numberOfObjects = 9;
     public bool saveBinaryMask = false;
     private int screenshotWidth, screenshotHeight;
-    private bool corruptedRLE = false;
-    private int numberOfRLETries = 0;
+    // private bool corruptedRLE = false;
+    // private int numberOfRLETries = 0;
     // private List<string> resizeImages = new List<string>();
     // int IDtaken = 0;
     // bool grab = false;
@@ -55,6 +55,10 @@ public class CameraPath : MonoBehaviour
         
     }
     void Start(){
+        if(File.Exists(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"))){
+            File.Delete(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"));
+            Debug.Log("[INFO] Deleting previous size template.");
+        }
         targetObjects = FindGameObjectsWithRadicalInTag(focusTagRadical);
         List<int[]> combs3 = generateCombinations(targetObjects.Length, 3);
         List<int[]> combs2 = generateCombinations(targetObjects.Length, 2);
@@ -73,26 +77,24 @@ public class CameraPath : MonoBehaviour
     void Update()
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
-            // string tp = Path.Combine(Application.persistentDataPath,"Resources/");
-            ScreenCapture.CaptureScreenshot(Application.dataPath+ "/Resources/"+"sizeTest.png");
-            // Texture2D t = ScreenCapture.CaptureScreenshotAsTexture();
-            // Texture2D t = Resources.Load<Texture2D>("test/sizeTest"); // ???? smaller
             
-            Vector2Int imgSize  = ImageHeader.GetDimensions(Path.Combine(Application.dataPath, "Resources/", "sizeTest.png"));
-            Debug.Log("imgSize.x =" + imgSize.x);
-            Debug.Log("imgSize.y =" + imgSize.y);
-            screenshotWidth = imgSize.x;
-            screenshotHeight = imgSize.y;
-            // imgSize  = ImageHeader.GetDimensions(Application.persistentDataPath+"/0-0.png");
-            // Debug.Log("imgSize.x =" + imgSize.x);
-            // Debug.Log("imgSize.y =" + imgSize.y);
-            
-            playdatshit = true;
-            encodedList.ims = new RLEncoding[myPath.getLength()];
-            string folderPath;
-            folderPath = Path.Combine(Application.persistentDataPath,"Resources/","images");
-            Debug.Log("[INFO] Saving data to: "+folderPath);
-            System.IO.Directory.CreateDirectory(folderPath);
+            if(!File.Exists(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"))) {
+                ScreenCapture.CaptureScreenshot(Application.dataPath+ "/Resources/"+"sizeTest.png");
+                Debug.Log("[INFO] Creating size template.");
+            } else {
+                Vector2Int imgSize  = ImageHeader.GetDimensions(Path.Combine(Application.dataPath, "Resources/", "sizeTest.png"));
+                Debug.Log("Image width: " + imgSize.x+"\n"+"Image height: " + imgSize.y);
+                // Debug.Log("Image height: " + imgSize.y);
+                screenshotWidth = imgSize.x;
+                screenshotHeight = imgSize.y;
+                
+                playdatshit = true;
+                encodedList.ims = new RLEncoding[myPath.getLength()];
+                string folderPath;
+                folderPath = Path.Combine(Application.persistentDataPath,"Resources/","images");
+                Debug.Log("[INFO] Saving data to: "+folderPath);
+                System.IO.Directory.CreateDirectory(folderPath);
+            }
         }
         if(Input.GetMouseButtonDown(1)){
             int randomCombination = rand.Next(combsCombined.Count);

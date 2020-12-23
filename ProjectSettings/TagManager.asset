@@ -5,23 +5,18 @@ TagManager:
   serializedVersion: 2
   tags:
   - spY
-  - bck
   - spG
   - spB
-  - Floor
-  - Ceiling
   - spR
-  - dP
-  - dLB
-  - dB
   - spT
   - spO
-  - spW
   - spK
   - spP
-  - cbB
   - spPill
   - spBe
+  - dieB
+  - dieLB
+  - dieP
   layers:
   - Default
   - TransparentFX
