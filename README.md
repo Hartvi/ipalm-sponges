@@ -28,5 +28,5 @@ Basically only one script CameraPath.cs attached to the MainCamera.
 - [ ] Save JSON bit by bit, eats up to an inifiniti amount of RAM
   - Data for 1.4k pictures ~ 8GB RAM
 - [ ] Some might say use shaders
-  - Others exist on GitHub, but they I couldn't get them to work on my PC.
+  - Others exist on GitHub, but I couldn't get them to work on my PC.
   
