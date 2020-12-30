@@ -22,11 +22,11 @@ Basically only one script CameraPath.cs attached to the MainCamera.
 
 
 ## TODO
-- [ ] Make RLE optional
+- [ ] Make optional RLE writing to JSON
 - [ ] Column-wise RLE
 - [ ] Customizable `Random Object Activation`
 - [ ] Save JSON bit by bit, eats up to an inifiniti amount of RAM
   - Data for 1.4k pictures ~ 8GB RAM
 - [ ] Some might say use shaders
-  - Others exist on GitHub, but they didn't work on my pc 100% of the time.
+  - Others exist on GitHub, but they I couldn't get them to work on my PC.
   
