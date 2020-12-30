@@ -1,11 +1,8 @@
-﻿// using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
 
-// using System.Text.Json;
-// using System.Text.Json.Serialization;
 public class CameraPath : MonoBehaviour
 {
     private Camera myCamera;
@@ -22,21 +19,14 @@ public class CameraPath : MonoBehaviour
     public int probeWidthHalf = 9;
     public int probeHeightHalf = 9;
     public string focusTagRadical = "sp";
-    // public string focusMaterial = "foam";
-    // public int focusObjectID = 13; // should be sponge
+    public bool randomObjectActivation = false;
+    public bool saveBinaryMask = false;
+
     RLElist encodedList = new RLElist();
     List<string> focusTags;
     System.Random rand = new System.Random();
     List<int[]> combsCombined;
-    public bool randomObjectActivation = false;
-    // public int numberOfObjects = 9;
-    public bool saveBinaryMask = false;
     private int screenshotWidth, screenshotHeight;
-    // private bool corruptedRLE = false;
-    // private int numberOfRLETries = 0;
-    // private List<string> resizeImages = new List<string>();
-    // int IDtaken = 0;
-    // bool grab = false;
     void Awake()
     {
         myCamera = gameObject.GetComponent<Camera>();
@@ -55,8 +45,8 @@ public class CameraPath : MonoBehaviour
         
     }
     void Start(){
-        if(File.Exists(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"))){
-            File.Delete(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"));
+        if(File.Exists(Application.dataPath+"/Resources/"+"sizeTest.png")){
+            File.Delete(Application.dataPath+"/Resources/"+"sizeTest.png");
             Debug.Log("[INFO] Deleting previous size template.");
         }
         targetObjects = FindGameObjectsWithRadicalInTag(focusTagRadical);
@@ -78,20 +68,27 @@ public class CameraPath : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0) && !playdatshit){
             
-            if(!File.Exists(Path.Combine(Application.dataPath, "/Resources/","sizeTest.png"))) {
+            if(!File.Exists(Application.dataPath+ "/Resources/"+"sizeTest.png")) {
                 ScreenCapture.CaptureScreenshot(Application.dataPath+ "/Resources/"+"sizeTest.png");
                 Debug.Log("[INFO] Creating size template.");
             } else {
-                Vector2Int imgSize  = ImageHeader.GetDimensions(Path.Combine(Application.dataPath, "Resources/", "sizeTest.png"));
-                Debug.Log("Image width: " + imgSize.x+"\n"+"Image height: " + imgSize.y);
-                // Debug.Log("Image height: " + imgSize.y);
+                Vector2Int imgSize  = ImageHeader.GetDimensions(Application.dataPath+"/Resources/"+"sizeTest.png");
+                Debug.Log("Image width: " + imgSize.x+"\n\t"+"Image height: " + imgSize.y);
                 screenshotWidth = imgSize.x;
                 screenshotHeight = imgSize.y;
                 
                 playdatshit = true;
                 encodedList.ims = new RLEncoding[myPath.getLength()];
                 string folderPath;
-                folderPath = Path.Combine(Application.persistentDataPath,"Resources/","images");
+                folderPath = Application.persistentDataPath+"/images";
+
+                System.IO.DirectoryInfo di = new DirectoryInfo(folderPath);
+                if (Directory.Exists(folderPath)) { 
+                    foreach (FileInfo file in di.GetFiles()) {
+                        file.Delete(); 
+                    }
+                } 
+                
                 Debug.Log("[INFO] Saving data to: "+folderPath);
                 System.IO.Directory.CreateDirectory(folderPath);
             }
@@ -133,11 +130,11 @@ public class CameraPath : MonoBehaviour
                     transform.position = focusObject.position + myPath.nextPosition();
                     transform.LookAt(focusObject.position);
                 }
-                string scrPath, folderName = Path.Combine("Resources/","images/"), imageName = myPath.currentID.ToString() + ".png";
+                string scrPath, folderName = "images/", imageName = myPath.currentID.ToString() + ".png";
                 int maskID = myPath.currentID;
-                // string maskFileName = "/SavedScreen"+myPath.currentID.ToString()+"-"+i.ToString()+".png";
-                scrPath = Path.Combine(Application.persistentDataPath,"Resources/","images", imageName);
-                
+
+                // Path to screenshot of the view from the normal camera
+                scrPath = Path.Combine(Application.persistentDataPath,"images", imageName);
                 ScreenCapture.CaptureScreenshot(scrPath);
                 
                 // save encoding for given (object,material,image)
@@ -147,7 +144,7 @@ public class CameraPath : MonoBehaviour
                     {
                         Texture2D tex = RLE2alpha8(encodedList.ims[myPath.currentID].annotations[i].segmentation, true);
                         byte[] bytes = tex.EncodeToPNG();
-                        File.WriteAllBytes(Path.Combine(Application.persistentDataPath,"Resources", "images/"+maskID.ToString()+"-"+i.ToString()+".png"), bytes);
+                        File.WriteAllBytes(Path.Combine(Application.persistentDataPath,"images/"+maskID.ToString()+"-"+i.ToString()+".png"), bytes);
                     }
                 }
                 
@@ -156,13 +153,12 @@ public class CameraPath : MonoBehaviour
                 playdatshit = false;
                 string jsonString = JsonUtility.ToJson(encodedList, true);
 
-                using(TextWriter tw = new StreamWriter(Path.Combine(Application.persistentDataPath, "Resources", "lre_data.json")))
+                using(TextWriter tw = new StreamWriter(Path.Combine(Application.persistentDataPath, "mask_data.json")))
                 {
                     tw.Write(jsonString);
                     Debug.Log("[INFO] Saved json.");
                 }
             }
-            // grab = true;
         }
     }
 
@@ -182,7 +178,6 @@ public class CameraPath : MonoBehaviour
         }
         if(flipVertical){
             byte[] temp = new byte[pixelBuffer.Length];
-            // pixelBuffer.CopyTo(temp, 0);
             for(int i=0;i<rle.size[1];++i){
                 Array.Copy(pixelBuffer, i*rle.size[0], temp, pixelBuffer.Length-rle.size[0]*(i+1), rle.size[0]);
             }
@@ -207,41 +202,21 @@ public class CameraPath : MonoBehaviour
         newEncoding.annotations = new List<Annotation>();
         int i = 0;
         foreach (string t in focusTags){
-            // safety code
-            // numberOfRLETries = 0;
-            // corruptedRLE = true;
             int[] boundingBox;// = new int[1];
             List<int> codedMask;// = new List<int>();
             List<Vector3Int[]> objectRectangles;// = new List<Vector3Int[]>();
-            
-            // int tempProbeWidth = probeWidth;
-            // while(corruptedRLE){
-            //     // Debug.Log("Checking RLE: "+numberOfRLETries);
-            //     // safety code
-            //     if(corruptedRLE && numberOfRLETries > 10){
-            //         // if it gives the same result thrice, then it's probably ok
-            //         break;
-            //     }
-                // probe, encodeRLE
-                // get rectangles:
-                // objectRectangles = probeImage(tempProbeWidth, probeHeight, t); // assuming simple landscape // ok
-                // objectRectangles = probeImage(probeWidthHalf, probeHeightHalf, t); // assuming simple landscape // ok
-                objectRectangles = probeImageCorners(probeWidthHalf, probeHeightHalf, t); // assuming simple landscape // ok
-                if(objectRectangles.Count == 0){
-                    continue;
-                }
-                // get RLE for each line, {row: {start: length}} :
-                Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
-                // get bounding box from line RLE:
-                boundingBox = RLELines2BoundingBox(lineAnnotation);
-                // get RLE for whole image composed from RLE of each line:
-                codedMask = getRLEFromLines(screenshotWidth, screenshotHeight, lineAnnotation);
-                // safety check
-                // corruptedRLE = isRLECorrupted(codedMask, boundingBox[2]-boundingBox[0]); // private bool corruptedRLE = false; private int numberOfTries = 0;
-                // corruptedRLE = false;
-                // numberOfRLETries++;
-                // tempProbeWidth = probeWidth + rand.Next(-probeWidth/2,probeWidth/2);
-            // }
+
+            objectRectangles = probeImageCorners(probeWidthHalf, probeHeightHalf, t); // assuming simple landscape // ok
+            if(objectRectangles.Count == 0){
+                continue;
+            }
+            // get RLE for each line, {row: {start: length}} :
+            Dictionary<int,Dictionary<int, int>> lineAnnotation = rectangles2Lines1Tag(objectRectangles, t);
+            // get bounding box from line RLE:
+            boundingBox = RLELines2BoundingBox(lineAnnotation);
+            // get RLE for whole image composed from RLE of each line:
+            codedMask = getRLEFromLines(screenshotWidth, screenshotHeight, lineAnnotation);
+
             // save the RLE of image into serializable class:
             newEncoding.file_name = folderName + imageName; // image name
             newEncoding.image_id = myPath.currentID; // image name
@@ -250,6 +225,8 @@ public class CameraPath : MonoBehaviour
             Annotation annotation = new Annotation();
             RLERaw rawRLE = new RLERaw();
             annotation.bbox = boundingBox;
+            
+            // Define materials for each object // TODO set this in YAML
             string materialID;
             if(t.Contains("sp")){
                 if(t.Contains("Pi")){ // spPill sponge Pill
@@ -269,7 +246,6 @@ public class CameraPath : MonoBehaviour
                 materialID = "unknown";
             }
             annotation.material_id = materialID; // material of focus, e.g. foam
-            // annotation.object_id = focusObjectID; // object type, e.g. sponge
             annotation.image_id = myPath.currentID;
             annotation.bbox_mode = 0;
             annotation.mask_file = Path.Combine("images/",maskID.ToString()+"-"+i.ToString()+".png");
@@ -285,7 +261,6 @@ public class CameraPath : MonoBehaviour
         int totalLength = 0;
         List<int> lengths = new List<int>(); // starting from zero
         int currentLength = 0;
-        // string debugstring = "";
         for(int r = height-1; r > -1; --r){
             if(!lines.ContainsKey(r)){
                 currentLength += width;
@@ -295,24 +270,21 @@ public class CameraPath : MonoBehaviour
                 Array.Sort(lineSegments); // from smallest to biggest beginnings 
                 int lastBegin = 0;
                 int lastLength = 0;
-                // for (int i = 0; i < lineSegments.Length;++i){ // begin in lineSegments)
-                //     debugstring = debugstring + "\n\n" + "row: "+r.ToString()+"\nstart: "+lineSegments[i]+"\nlength: "+lines[r][lineSegments[i]];
-                // }
                 for (int i = 0; i < lineSegments.Length;++i) // begin in lineSegments)
                 {
                     currentLength += lineSegments[i] - lastBegin - lastLength;
                     if(currentLength > 0){
-                        lengths.Add(currentLength); // empty guy
+                        lengths.Add(currentLength);
                         totalLength += currentLength; // parallel counting
-                    } else {
-                        lengths[lengths.Count-1] -= 1;
+                    } else { // this doesn't happen, but in case it did, the zero eliminates accidental switching of the binary mask values
+                        lengths[lengths.Count-1] -= 1; // eliminates some shift, when there is a duplicate pixel
                         lengths.Add(0); // empty guy
                         totalLength += currentLength; // parallel counting
                         Debug.Log("[ERROR] Some lengths were negative!!: curLen: "+currentLength+"\nbegin["+i+"]: "+lineSegments[i]+"  lastBegin: "+lastBegin+"  lastLen: "+lastLength);
                     }
                     lengths.Add(lines[r][lineSegments[i]]); // take into account that I haven't reached the end of the line
                     totalLength += lines[r][lineSegments[i]]; // parallel counting
-                    // previous round \/
+                    // save data from previous line \/
                     lastBegin = lineSegments[i];
                     lastLength = lines[r][lineSegments[i]];
                     if(i+1 == lineSegments.Length){
@@ -324,6 +296,7 @@ public class CameraPath : MonoBehaviour
                 }
             }
         }
+        // uncomment for DEBUG
         // File.WriteAllText(Path.Combine(Application.persistentDataPath,"Resources","RLE_per_lines.txt"), debugstring);
         // return null;
         lengths.Add(currentLength); // makes the last length exist even though it is 0
@@ -373,14 +346,9 @@ public class CameraPath : MonoBehaviour
         if(objectRectangles.Count == 0) Debug.Log("[WARNING] No object rectangles found!");
         Ray ray;
         Vector3Int screenUV = new Vector3Int(0,0,0);
-        // TODO [ERROR], thsi piece of code causes: end = 874, nextBegin = 873
-        // int lastEnd = 0;
         foreach (Vector3Int[] rectangle in objectRectangles)
         {
             for(int r = rectangle[0].y; r < rectangle[1].y; ++r){ // ok
-                // safety code
-                // lastEnd = 0;
-                // end of safety code
                 bool hitLastOne = false;
                 int beginHit = 0;
                 int lastHitCount = 0;
@@ -403,9 +371,7 @@ public class CameraPath : MonoBehaviour
                                 }
                                 
                                 if(!perLineValues[r].ContainsKey(beginHit)){
-                                    // if(lastEnd > beginHit){ beginHit = lastEnd;} // safety check, 1/200 is off by one
                                     perLineValues[r][beginHit] = lastHitCount;
-                                    // lastEnd = beginHit+lastHitCount;
                                 }
                                 hitLastOne = false;
                             }
@@ -416,9 +382,7 @@ public class CameraPath : MonoBehaviour
                                 perLineValues[r] = new Dictionary<int,int>();
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
-                                // if(lastEnd > beginHit){ beginHit = lastEnd;}
                                 perLineValues[r][beginHit] = lastHitCount;
-                                // lastEnd = beginHit+lastHitCount;
                             }
                             hitLastOne = false;
                         }
@@ -429,9 +393,7 @@ public class CameraPath : MonoBehaviour
                                 perLineValues[r] = new Dictionary<int,int>();
                             }
                             if(!perLineValues[r].ContainsKey(beginHit)){
-                                // if(lastEnd > beginHit){ beginHit = lastEnd;}
                                 perLineValues[r][beginHit] = lastHitCount;
-                                // lastEnd = beginHit+lastHitCount;
                             }
                            hitLastOne = false;
                         }
@@ -441,75 +403,14 @@ public class CameraPath : MonoBehaviour
         }
         return perLineValues;
     }
-    List<Vector3Int[]> probeImage(int stepX, int stepY, string targetTag){
-        RaycastHit hit;
-        Ray ray;
-        Vector3Int screenUV = new Vector3Int(0,0,0);
-        bool lastOneHit = false;
-        List<Vector3Int[]> rasterRectangles = new List<Vector3Int[]>();
-        int lastRectangleIndex = 0;
-        // bool detectedTag = false;
-        int stepY2 = stepY*2;
-        int stepX2 = stepX*2;
-        for(int r = stepY; r < screenshotHeight; r+=stepY2){  // top to bottom
-            for(int c = stepX; c < screenshotWidth; c+=stepX2){ // left to right
-                if(c == stepX && lastOneHit){
-                    lastOneHit = false;
-                    ++lastRectangleIndex;
-                }
-                screenUV.x = c-stepX;
-                screenUV.y = r-stepY;
-                ray = myCamera.ScreenPointToRay(screenUV); 
-                
-                if (Physics.Raycast(ray, out hit)) { // this one hit but the last one didn't
-                    if(hit.transform.tag == targetTag){
-                        if(!lastOneHit){
-                            rasterRectangles.Add(new Vector3Int[2]);
-                            rasterRectangles[lastRectangleIndex][0] = new Vector3Int(Mathf.Max(c-stepX2, 0), Mathf.Max(0, r-stepY2), 0);
-                            rasterRectangles[lastRectangleIndex][1] = new Vector3Int(screenshotWidth, r, 0);
-                            // save previous x and previous y
-                            lastOneHit = true;
-                            // detectedTag = true;
-                        }
-                    } else { // this one didn't hit
-                        if(lastOneHit){ // but the last one did
-                            rasterRectangles[lastRectangleIndex][1].x = c;
-                            ++lastRectangleIndex;
-                            lastOneHit = false;
-                        }
-                    }
-                } else {
-                    if(lastOneHit){ // but the last one did
-                        rasterRectangles[lastRectangleIndex][1].x = c;
-                        ++lastRectangleIndex;
-                        lastOneHit = false;
-                    }
-                }
-            }
-        }
-        // if(!detectedTag){
-        //     Debug.Log("[WARNING] Haven't detected tag: "+targetTag);
-        // }
-
-        // int i = 0;
-        // Debug.Log("(w,h): ("+Screen.width+","+Screen.height+")");
-        // foreach (var item in rasterRectangles)
-        // {
-        //     Debug.Log("rec"+i.ToString()+": (x0,y0): ("+item[0].x+", "+item[0].y+")");
-        //     Debug.Log("rec"+i.ToString()+": (x1,y1): ("+item[1].x+", "+item[1].y+")");
-        //     i++;
-        // }
-        return rasterRectangles;
-    }
+    
     List<Vector3Int[]> probeImageCorners(int stepX, int stepY, string targetTag){
         RaycastHit hit;
-        // Ray[] rays = new Ray[4];
         Ray ray;
         Vector3Int screenUV = new Vector3Int(0,0,0);
         bool lastOneHit = false;
         List<Vector3Int[]> rasterRectangles = new List<Vector3Int[]>();
         int lastRectangleIndex = 0;
-        // bool detectedTag = false;
         int stepY2 = stepY*2;
         int stepX2 = stepX*2;
         int widthmX2 = screenshotWidth-stepX2;
@@ -553,18 +454,6 @@ public class CameraPath : MonoBehaviour
                 thisOneHit = false;
             }
         }
-        // if(!detectedTag){
-        //     Debug.Log("[WARNING] Haven't detected tag: "+targetTag);
-        // }
-
-        // int i = 0;
-        // Debug.Log("(w,h): ("+Screen.width+","+Screen.height+")");
-        // foreach (var item in rasterRectangles)
-        // {
-        //     Debug.Log("rec"+i.ToString()+": (x0,y0): ("+item[0].x+", "+item[0].y+")");
-        //     Debug.Log("rec"+i.ToString()+": (x1,y1): ("+item[1].x+", "+item[1].y+")");
-        //     i++;
-        // }
         return rasterRectangles;
     }
     public List<int[]> generateCombinations(int n, int r) {
@@ -669,15 +558,11 @@ public class SpherePath{
 }
 
 [System.Serializable]
-class RLEncoding{ // , ISerializationCallbackReceiver
+class RLEncoding{
     public string file_name;
-    // public int object_id; // 0=sponge,1=cube
-    // public string material_id; // 0=foam
     public int width;
     public int height;
     public int image_id;
-    // public int[] boundingBox;
-    // public List<int> RLE;
     public List<Annotation> annotations;
 }
 
@@ -691,7 +576,6 @@ class RLERaw{
 class Annotation{
     public int[] bbox;
     public int bbox_mode;
-    // public int object_id;
     public string material_id;
     public int image_id;
     public string mask_file;
